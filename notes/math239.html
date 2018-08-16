@@ -1,0 +1,541 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>MATH 239 S18: GRAPH THEORY NOTES</title>
+        <meta name="description" content="B. Richter's section.">
+        <link rel="stylesheet" href="../main.css">
+    </head>
+    <body>
+        
+        <header><p><a href="notesl.html">&larr; Back to notes page</a></p></header>
+        
+        <h1>GRAPH THEORY LECTURE NOTES</h1>
+        <h2>Part 2 of the MATH 239 course.</h2>
+        <hr>
+        <h3>What is a graph?</h3>
+        <p>A graph is a set of vertices V, and a pair of edges E. An edge is a set of two vertices. The two vertices in an edge are said to be <i>connected.</i>
+        <br>
+        When represented visually, a vertex is a point, while an edge is a side that connects two points together.
+            <br><br>
+        Molecules are often represented as graphs. Atoms are vertices, and the chemical bonds between them are edges. You might also represent a map of the world via a graph. Each vertex might be a country, and two countries are adjacent if they share a border.</p>
+        
+        <p>
+        Other examples:
+        </p>
+            <ul>
+                <li>Human connection (eg. Facebook)</li>
+                <li>Radio stations: each radio station is a vertex. Each edge represents two radio stations that have the same frequency, and thus will interfere if they are too close.</li>
+            </ul>
+        
+        
+        <p>
+        A vertex can also be conceptualized as a <i>node</i>. We will use the terminology vertex for this course.
+        </p>
+        
+        <p>
+            Oftentimes, graphs come up in unusual ways. There is another way to label vertices and edges to get the same picture. Vertices can also be represented as things like 2-subsets of a certain range of integers, etc. Other examples will be apparent as the course continues.
+        </p>
+        
+        <p>
+            Two vertices are said to be <i>adjacent</i> if they are joined by an edge. In the edge <Code>{1, 2}</Code>, the vertices 1 and 2 are adjacent.
+        </p>
+        
+        <hr>
+        
+        <h3>When are two graphs the same? When are they different?</h3>
+        
+        <p>
+            There are two ways to look at graphs. If labelling matters, then you might say that two otherwise identical graphs are different if they do not use the same vertices labels. If it does not, you might say that as long as there exists a bijection from one set of vertices to another, then they are expressing the same graph.
+        </p>
+        
+        <p>
+            Two graphs <code>(V<sub>1</sub>, E<sub>1</sub>)</code> and <code>(V<sub>2</sub>, E<sub>2</sub>)</code> are <i>isomorphic</i> if there is a bijection <code>F: V<sub>1</sub> &rarr; V<sub>2</sub></code> such that <code>{u,v}</code> exist in <code>E<sub>1</sub></code> if and only if <code>{f(u),f(v)}</code> exist in <code>E<sub>2</sub></code>.
+        </p>
+        
+        <p>
+            For this course, saying two graphs are isomorphic is tantamount to saying that they are two different representations of the same graph.
+        </p>
+        
+        <h3>
+            Can we tell if two graphs are isomorphic?
+        </h3>
+        
+        <p>
+            Say we have a graph <code>G</code> = <code>(V,E)</code>. V = <code>{1,2,3,4,5}</code>, and E = <code>{{1,2}, {2,3}... {5,1}}</code>, and another graph H where V(H) = <code>{1,2,3,4}</code>.<br><br> We can instantly tell that G and H are not isomorphic without even knowing anything else about H, because G has 5 vertices, while H only has 4. This follows from the definition of a bijection - <b>two isomorphic graphs must have the same number of edges and vertices.</b>
+        </p>
+        
+        <p>
+            The <i>degree</i> of a vertex <code>v</code> is the number of edges that contain <code>v</code>. <code>deg(v)</code> is shorthand for the degree of v.
+        </p>
+        
+        <p>
+            If <code>F: G &rarr; H</code> is an isomorphism, then for every vertex <code>v</code> of <code>G</code>, <code>deg<sub>G</sub>(v) = deg<sub>H</sub>(f(v))</code>.
+        </p>
+        
+        <p>
+            To show that two graphs are isomorphic:
+        </p>
+        
+        <ul><li>Exhibit a bijection</li><li>Show that the bijection preserves the edges (provide a argument for this)</li></ul>
+        
+        <p>
+            To show that a bijection does not hold, show that the bijection being proposed does not preserve the edges.
+        </p>
+        
+        <hr>
+        
+        <h3>Cycles</h3>
+        
+        <p>For <code>k &ge; 3</code>, a <i>k-cycle</i> is a sequence <code>(v<sub>0</sub>, v<sub>1</sub>, ... , v<sub>k-1</sub>, v<sub>0</sub>)</code> of vertices, all distinct, such that for each <code>i = 1, 2, ..., k</code>, <code>(v<sub>i-1</sub>, v<sub>i</sub>)</code> is an edge.</p>
+        
+        <p>Generally speaking, the direction and order of the sequence does not matter, but there will be instances where it does matter.</p>
+        
+        <p>(You can't have a 2-cycle or a 1-cycle, for obvious reasons. These are not defined.)</p>
+        
+        <p>If G has an odd-length cycle, then there is no 2-colouring of the vertices so that every edge joins vertices of different colours.</p>
+        
+        <p>In other words, if G has a 2-colouring of the vertices so that every edge joins vertices of different colours, then G has no odd-length cyles.</p>
+        
+        <h3>Bipartite Graphs</h3>
+        
+        <p>The first part of the above fact also describes a bipartite graph.</p>
+        
+        <p>A graph <code>G</code> is <i>bipartite</i> if it has a 2-colouring of its vertices so that every edge joins vertices of different colours.</p>
+        
+        <h3>Paths</h3>
+        
+        <p>A <i>k-path</i> is a sequence <code>(v<sub>0</sub>, v<sub>1</sub>, ... , v<sub>k</sub>)</code> of distinct vertices such that, for <code>i = 1, 2, ..., k</code>, <code>(v<sub>i-1</sub>,v<sub>i</sub>)</code> is an edge.</p>
+        
+        <p>k path = path of length k, a path with k edges. (A k path will have <code>k + 1</code> vertices). A 0-path is just a vertex (and indeed, every vertex is a 0-path). A 1-path is just an edge (and indeed, every edge is a 1-path).</p>
+        
+        <h3>Walks</h3>
+        
+        <p>A <i>walk</i> in a graph is a sequence <Code>(v<sub>0</sub>, v<sub>1</sub>, ..., v<sub>k</sub>)</Code> of vertices in <code>G</code> such that for each <code>i = 1., 2., ..., k</code>, <code>(v<sub>i-1</sub>,v<sub>i</sub>)</code> is an edge of <code>G</code>.</p>
+        
+        <p>Note that a path is a walk with all vertices distinct.</p>
+        
+        <p>A walk is <i>closed</i> if it comes back to where it starts, in essence, <code>v<sub>0</sub> = v<sub>k</sub></code>.</p>
+        
+        <p>Also, note that a cycle is a closed walk such that (except for the beginning being the same as the end), all vertices are distinct.</p>
+        
+        <h3>Connectedness</h3>
+        
+        <p>A graph is <i>connected</i> if there is a walk in <code>G</code> that contains all the vertices. Or, for any two vertices <code>u</code> and <code>v</code> in <code>G</code>, there is a path in <code>G</code> from <code>u</code> to <code>v</code>.</p>
+        
+        <p>Proof that the definitions are the same:</p>
+        
+        <p>Def 3 -> def 2. Let <code>(v<sub>0</sub>... v<sub>k</sub>)</code> be auv-walk in G. If all vertices are distinct, then there is auv-path. Otherwise, there exist i &lt; j such that <code>v<sub>i</sub> = v<sub>j</sub></code>. which is less than the length of the orignial (<code>k</code>) Show this with either induction or start with a shortest uv-walk.</p>
+        
+        <p>Def 2 -> def 1. For any two vertices <code>u, v</code>, let <code>P<sub>uv</sub></code> be a uv-walk. Label the vertices of <CODE>G</CODE> as <Code>v<sub>0</sub>, ..., v<sub>k</sub></Code>. <code>P<sub>v<sub>0</sub>v<sub>1</sub></sub></code>... is then a path. Concatenating any vertices in <code>v</code> should give a path.</p>
+        
+        <p>A <i>component</i> of a graph <code>G</code> is a maximal connected subgraph. That is, <code>H</code> is a component of <code>G</code> if <code>H</code> is a connected subgraph and if <code>K</code> is a subgraph such that <code>H</code> &sub; <code>K</code>, then <code>K</code> is not connected.</p>
+        
+        <p><b>Hand-shaking Lemma</b>: if <CODE>(V,E)</CODE> is a graph, then <code>&Sigma;<sub>u&isin;v</sub> deg(v) = 2|E|.</code></p>
+        
+        <hr>
+        
+        <p>Let <code>G</code> be a connected graph and let <Code>v</Code> be a vertex of <Code>G</Code> such that <code>deg(v)</code> is odd. Prove that there is a path <code>P</code> in <code>G</code> with ends <code>v, w</code>, <code>w &ne; v</code>, such that <code>deg(w)</code> is also odd.</p>
+        
+        <p>Answer: By handshaking lemma, the degree of <code>V</code> is even. So there are also an even number of vertices with degree odd (this is to say, more than one, or zero, but we are not concerned with that case here). Since the graph is connected, we can find a path for any two vertices in <code>V</code>. Thus, such a path will always exist.</p>
+        
+        <hr>
+        
+        <p>What happens if <code>G</code> is not connected? Does such a <code>P</code> always exist?</p>
+        
+        <p>Answer: Let <code>H</code> be the component of <code>G</code>. Then H is a connected graph, and <code>deg<sub>H</sub>(v) = deg<sub>G</sub>(v)</code>. We are now free to apply (1) to <code>v</code> in <code>H</code>.</p>
+        
+        <hr>
+        
+        <p>Let <code>G</code> be a graph in which every vertex has degree &ge; 2. Prove <code>G</code> has a cycle.</p>
+        
+        <p>Answer: Basic observation is if I walk into a vertex, then either I've already visited it before or it's the first time I've visited it, but since degree is guaranteed to be &ge; 2, there is another incident edge and can just walk out on the incident edge. In other words, I never get stuck unless I get to somewhere I've already been.</p>
+        
+        <p>Proof: Let <Code>v<sub>0</sub></Code> be any vertex of <Code>G</Code>. Define a sequence <code>v<sub>0</sub>, v<sub>1</sub>...</code> of vertices by: if <code>v<sub>0</sub>...v<sub>i</sub></code> are distinct, let <code>v<sub>i+1</sub></code> be any neighbour of <code>v<sub>i</sub></code> different from <code>v<sub>i-1</sub></code>. If <code>v<sub>i</sub></code> is one of <code>v<sub>0</sub>...v<sub>i-1</sub></code>, then it is a cycle in <code>G</code>. Since there are only finitely many vertices in G, the sequence cannot have more than |V(G)| terms, showing that, at some point, <code>v<sub>i</sub></code> occure among <code>v<sub>0</sub>...v<sub>i-1</sub></code>.</p>
+        
+        <hr>
+        
+        <p><Code>G</Code> connected, &ge; 3 vertices have degree &ge; 2. Does <Code>G</Code> necessarily have a cycle? (No: this just describes a path if there are no other assumptions.)</p>
+        
+        <h3>Trees</h3>
+        
+        <p>A <i>tree</i> is a connected graph with no cycles.</p>
+        
+        <p>A <i>forest</i> is a graph with no cycles (named such because every component of a forest is a tree).</p>
+        
+        <p>Every tree is a forest, and every forest contains at least one tree.</p>
+        
+        <p>In addition, every path is a tree. Except for the smallest tree (just a single vertex), every tree has a vertex of degree 1.</p>
+        
+        <hr>
+        
+        <h3>Eulerian Circuits</h3>
+        
+        <p><b>Euler's equation</b>: <code>e<sup>i&pi;</sup> + 1 = 0</code></p>
+        
+        <p>Aside: a number's <i>parity</i> is either even or odd.</p>
+        
+        <P>Question: can you find a closed walk traversing every edge exactly once?</P>
+        
+        <p>An <i>Euler Tour</i> is a closed walk traversing every edge exactly once.</p>
+        
+        <p>Theorem: A graph <code>G</code> has an Euler tour iff <code>G</code> has only one component with edges, and every vertex of <code>G</code> has even degree.</p>
+        
+        <p>Proof: Suppose <code>G</code> has an Euler tour (<code>v<sub>0</sub>,e<sub>1</sub>,...,e<sub>k</sub>,v<sub>0</sub></code>). If <code>e</code> and <code>f</code> are edges of G, then there are indices <code>i</code> and <code>j</code> such that <code>e = e<sub>i</sub></code> and <code>f = e<sub>j</sub></code>. The walk <code>(v<sub>i-1</sub>,e<sub>i</sub>,v<sub>i</sub>,e<sub>i+1</sub>...v<sub>j-1</sub>,e<sub>j</sub>,v<sub>j</sub>)</code> shows that the ends <code>v<sub>i-1</sub>,v<sub>1</sub></code> of <code>e</code> and the ends <code>v<sub>j-1</sub>,v<sub>j</sub></code> are in the same component of <code>G</code>.</p>
+        
+        <p>Therefore <code>e,f</code> are in the same component of G.</p>
+        
+        <p>If we consider a vertex of <code>G</code> in that component (the others have degree 0, which is even), we have <code>v = v<sub>i<sub>1</sub></sub>...v<sub>i<sub>j</sub></sub></code> for some indices <code>0 &le; i<sub>1</sub> &lt; ... &lt; i<sub>j</sub> &le; k </code>. The <code>v</code> is incident with the edges <code>e<sub>i<sub>1</sub></sub>,e<sub>i<sub>1</sub>+1</sub>...,e<sub>i<sub>j</sub></sub>,e<sub>i<sub>j</sub>+1</sub></code>.</p>
+        
+        <p>What if <code>e<sub>i<sub>1</sub>+1</sub> = e<sub>i<sub>2</sub></sub></code>? Because <code>v<sub>i<sub>1</sub>+1</sub> &ne; v<sub>i<sub>1</sub></sub></code>, the index <code>i<sub>2</sub> &ne; i<sub>1</sub>+1</code>. The same holds all along. Thus, the edges listed are all different. They come in pairs, so there is an even number of them.</p>
+        
+        <p>Now, suppose <code>G</code> is a connected graph and every vertex of G has even degree. We want to prove G has an Euler tour. Start at a vertex <code>v</code>. We prove this by induction on <code>|E(G)|</code>.</p>
+        
+        <p>If <code>|E(G)|</code> = 0, then <code>G</code>, being a connected graph, has one vertex <code>v</code>; <code>(v)</code> is the tour.</p>
+        
+        <p>Now suppose <code>|E(G)|</code> &gt; 0. Then every vertex has positive degree. Since every vertex has even degree, every vertex has degree &ge; 2. By previous theorem, <code>G</code> has a cycle <code>C</code>. Delete the edges of <code>C</code> to get a smaller graph with fewer edges. What happens?</p>
+        
+        <p>Let <code>H</code> be the subgraph of <code>G</code> obtained from <code>G</code> by deleting the edges of <code>C</code>. Every vertex of <code>H</code> has even degree (same as <Code>G</Code> or two less, if in <code>C</code>). Also, <code>|E(H)|</code> &lt; <code>|E(G)|</code>(<code>H</code> has fewer edges).</p>
+        
+        <hr>
+        
+        <p>Midterm next Thursday at 4:30. Covers everything up to assignment 7 (due this Friday) - up to week 7 on the syllabus.</p>
+        
+        <p>What if <code>H</code> is not connected?</p>
+        
+        <p>Let <code>G</code> be a connected graph in which every vertex has an even degree. Then, <code>G</code> has an Euler tour.</p>
+        
+        <p><b>Proof:</b> Proceed by induction on <code>|E(G)|</code>.</p>
+        
+        <p>If <code>|E(G)| = 0</code>, then G has one vertex, <code>v</code>, and the Euler tour is trivial.</p>
+        
+        <p>For the inductive step, suppose <code>|E(G)|</code> &gt; 0. Since G is connected, every vertex has positive degree, and since every vertex has even degree, every vertex has degree &gt; 2. By earlier theorem, G has a cycle C.</p>
+        
+        <p>Strategy: start walking along the cycle C. The first time we enter a component of <Code>G - E(C)</Code>, we insert the Euler tour of that component.</p>
+        
+        <p>The proof is completed by showing every component of <Code>G - E(C)</Code> has a vertex in <code>C</code>. How do we prove this?</p>
+        
+        <p>Say <code>G - E(C)</code> has <code>r</code> components. Let <code>K</code> be a component of <code>G - E(C)</code> and let <code>w</code> be a vertex of <code>K</code>. Let <Code>v</Code> be a vertex of <code>C</code>. There is a vw-path <code>P</code> in <code>G</code>. Let <code>P = (v<sub>0</sub>, v<sub>1</sub>,...,v<sub>k</sub>)</code>, with <code>v = v<sub>o</sub>, w = v<sub>k</sub></code>. The index <code>k</code> has <code>w</code> in both <code>P</code> and <code>K</code>. Let <code>i</code> be the least index such that <code>v<sub>i</sub></code> is in both <code>P</code> and <code>K</code>.<br><br> If <code>i &gt; 0</code>, then <Code>v<sub>i-1</sub></Code> is in <code>P</code> but not in <code>K</code>. So <code>v<sub>H</sub></code> is not in the component <code>K</code> of <code>G - E(C)</code> and <code>v<sub>i-1</sub>v<sub>i</sub></code> is an edge of <code>G</code>. Therefore, <code>v<sub>i-1</sub>v<sub>i</sub></code> is not in <code>G - E(C)</code> and so is in <code>C</code>. Therefore <code>v<sub>i</sub></code> is in <code>C</code> and in <code>K</code>.</p>
+        
+        <p>If <code>i = 0</code>, then <code>v = v<sub>0</sub></code> is in <code>C</code> (by choice of <code>v</code>) and in <code>K</code> (by choice of <code>i</code>). (end)</p>
+        
+        <p>Every graph <code>G</code> in which every vertex has even degree has cycles <code>C<sub>1</sub>, ...,C<sub>r</sub></code> such that: for all <code>i &lt; j</code>, <Code>E(C<sub>i</sub>) &cap; E(C<sub>j</sub>) &ne; &empty;</Code>, and <code>E(G) = E(C<sub>1</sub>) &cup; ... &cup; E(C<sub>r</sub>)</code>.</p>
+        
+        <hr>
+        
+        <p><b>MIDTERM: NEXT THURSDAY JUNE 28TH</b></p>
+        
+        <h3>More In-depth Discussion of Trees</h3>
+        
+        <p>Recall: a <i>tree</i> is a connected graph with no cycles. We saw that if a graph has every vertex with degree at least 2, then the graph has a cycle. Then, every tree has at least one vertex with degree 1, by corollary. (The exception is the trivial tree that has no edges and only one vertex.)</p>
+        
+        <p>Every path is an example of a tree, and it has two vertices of degree 1.</p>
+        
+        <p>Let a tree <code>T</code> exist, where all vertices except one, <code>u</code>, has at least degree 2. What do we get when look at <code>T - u</code>?</p>
+        
+        <p>Fact: if <code>T</code> is a tree and <code>u</code> is a vertex with degree 1 in <code>T</code>, then <code>T - u</code> is a tree with one less vertex than T.</p>
+        
+        <p>If you delete a vertex with degree larger than 1, then you end up with multiple components, all of which are trees.</p>
+        
+        <p>Facts about trees:</p>
+        
+        <ul>
+        
+            <li>If T is a tree with nvertices, then <code>|E(T)|</code> = n-1. <code>(|V(T)| - |E(T)| = 1)</code></li>
+            <li>If T is a tree, then T is bipartite. <b>(very important!)</b></li>
+        </ul>
+        
+        <h3>Bridges</h3>
+        
+        <p>A <i>bridge</i> is an edge <code>e</code> in a graph <code>G</code> where <code>G - e</code> has more components than <code>G</code>. Alternatively, an edge <code>e</code> in a graph <code>G</code> is a bridge if, for <code>K</code> the component of <code>G</code> containing <code>e</code> is such that <code>K - e</code> is not connected.</p>
+        
+        <p>When is an edge not a bridge? If an edge is in a cycle, it will never be a bridge.</p>
+        
+        <p>Converse is also true: if e is not a bridge, then e is in a cycle.</p>
+        
+        <p>Theorem: An edge e of a graph G is NOT a bridge if and only if e is in a cycle of G.</p>
+        
+        <p>By consequence, every edge in a tree is a bridge.</p>
+        
+        <p>If every vertex of G has even degree, then G has no bridge, since G then has an Euler tour. Then every edge is in a cycle.</p>
+        
+        <hr>
+        
+        <h3>More Trees</h3>
+        
+        <p>Facts we've seen so far for a tree <CODE>T</CODE>:</p>
+        
+        <ul>
+        <li><code>|E(T)| - |V(T)| = 1</code></li>
+        <li>T is bipartite</li></ul>
+        
+        <p>Let <code>T</code> be a tree, and for each vertex <code>v</code> of <code>T</code>, <Code>deg(V)</Code> is the degree of <code>v</code>. We know <code>&Sigma;<sub>v&isin;V(G)</sub> deg(V) = 2|E(T)| = 2|V(T) - 1</code>. For each <code>i = 0,1,2...n-1</code>, let <code>n<sub>i</sub></code> denote the number of vertices <code>v</code> having <code>deg(v) = i</code> in <Code>T</Code>. Therefore,</p>
+        
+        <p><code>&Sigma;<sub>v&isin;V(T)</sub> deg(v) = &Sigma;<sup>n-1</sup><sub>i=0</sub> i n<sub>i</sub></code>.</p>
+        
+        <p><code>&Sigma;<sup>n-1</sup><sub>i=0</sub> n<sub>i</sub> = |V(T)| = n</code></p>
+        
+        <p>So <code>2n - 2 = &Sigma;<sub>v&isin;V(G)</sub> deg(v) = &Sigma;<sup>n-1</sup><sub>i=0</sub> i n<sub>i</sub></code></p>
+        
+        <p>Thus, <code>(2n - 2) - (2n) = (&Sigma;<sup>n-1</sup><sub>i=0</sub> i n<sub>i</sub>) - (&Sigma;<sup>n-1</sup><sub>i=0</sub> 2n<sub>i</sub>) = &Sigma;<sup>n-1</sup><sub>i=0</sub> (i-2)n<sub>i</sub></code>.</p>
+        
+        <p>Simplifying: the above equals -2.</p>
+        
+        <p>If <code>n = 1</code>, then T = &bull; and <code>n<sub>0</sub> = 1</code> with all others = 0. Then <code>-2 = (-2) * 1</code>.</p>
+        
+        <p>If <code>n = 2</code>, then then <code>n<sub>0</sub> = 0, n<sub>2</sub> = 2</code> with all others = 0. Then <code>-2 = (-2)0 + (-1)(2)</code>.</p>
+        
+        <p>Following this to its logical endpoint, then you get <code>n<sub>1</sub> = 2 + &Sigma;<sup>n-3</sup><sub>i=1</sub>i n<sub>i+2</sub> ... &ge; 2</code>, for <code>n &gt; 1, n<sub>0</sub> = 0, n<sub>1</sub> &ge; 1</code>.</p>
+        
+        <h3>Spanning Trees</h3>
+        
+        <p>A subgraph <code>H</code> of a graph <code>G</code> is <i>spanning</i> if it includes all of <code>G</code>'s vertices.</p>
+        
+        <p>A <i>spanning tree</i> in a graph <code>G</code> is a spanning subgraph that is a tree. (That is, a subgraph that contains all of <code>G</code>'s vertices, is connected, and has no cycles.)</p>
+        
+        <p>When does a graph have a spanning tree? <b>Theorem</b>: a graph <code>G</code> has a spanning tree if and only if <Code>G</Code> is connected.</p>
+        
+        <p><b>Proof</b>: suppose <code>G</code> has a spanning tree <code>T</code>. Let <code>u,v</code> be vertices of <code>G</code>. Since <code>T</code> is spanning, <code>u,v &isin; V(T)</code>. Since <code>T</code> is a tree, there is a uv-path in <code>T</code>. A <code>T</code> is a subgraph of <code>G</code> and <code>P</code> is a subgraph of <code>T</code>, <code>P</code> is a subgraph of <code>G</code>. Therefore <code>G</code> has a uv-path, so <code>G</code> is connected.</p>
+        
+        <p>Now suppose <code>G</code> is connected. If <code>G</code> has a cycle <code>C</code>, then an edge <code>e</code> of <code>C</code> is not a bridge of <code>G</code>. Therefore, <code>G-e</code> is a smaller connected spanning subgraph of <code>G</code>. By induction on the number of cycles, <code>G-e</code> has a spanning tree, so <code>G</code> has a spanning tree.</p>
+        
+        <hr>
+        
+        <h3>Weight</h3>
+        
+        <p>The <i>weight</i> of an edge is an arbitrary value assigned to an edge. We are interested in building spanning trees of a graph that minimizes the sum of the weights of the edges in the tree.</p>
+        
+        <p>In order to create a spanning tree that minimizes the weight, the edge to pick must be in different components of our current forest (no cycle rule), and then pick the edge that follows that rule with the least weighted edge.</p>
+        
+        <p>This algorithm produces a spanning tree of small weight. But can we do better? Can we prove that this does or doesn't yield a minmium weight spanning tree?</p>
+        
+        <p>Let's try to compare a spanning tree produced by the algorithm with another spanning tree that presumably has smaller weight - call such a tree <code>S</code>. We will prove <code>S</code> does not exist.</p>
+        
+        <p><b>Proof:</b> Let F<sub>1</sub>...F<sub>n</sub> = T be the sequence of forests obtained by the algorithm, and let S be a smallest weight spanning tree.</p>
+        
+        <p>If S &ne; T, what we will do is find another spanning tree S' such that wt(S') &le; wt(S) and S' has more edges in common with T than S does.</p>
+        
+        <hr>
+        
+        <p>Algorithm for finding a minmium weight spanning tree:</p>
+        
+        <ol>
+        <li>Start with a forest F, with all vertices, no edges</li>
+        <li>Given F<sub>i</sub> with <code>i &lt; n-1</code> edges, obtain F<sub>i+1</sub> from F<sub>i</sub> by adding an edge of least weight that does not introduce a cycle (or, in other words, the new edge has its ends in different components of F<sub>i</sub>)</li></ol>
+        
+        <p><b>Theorem:</b> this algorithm outputs a minmium weight spanning tree.</p>
+        
+        <p><b>Proof:</b> Let the edges picked for the output tree be, in order, <code>e<sub>1</sub>, e<sub>2</sub>,...,e<sub>n-1</sub></code>. We show by induction that for each i, there is a minmium weight spanning tree containng all of <code>e<sub>1</sub>, e<sub>2</sub>,...,e<sub>i</sub></code>.</p>
+        
+        <p>Let S<sub>i</sub> be a minmium weight spanning tree containing <code>e<sub>1</sub>...e<sub>i</sub></code>. If e<sub>i+1</sub> &isin; E(S<sub>i</sub>), then set S<sub>i+1</sub> = S<sub>i</sub> and this contains e<sub>1</sub>...e<sub>i+1</sub> as required.</p>
+        
+        <p>Interesting case: e<sub>i+1</sub> &notin; E(S<sub>i</sub>). The subgraph S<sub>i</sub> + e<sub>i+1</sub> is connected, not a tree, so it has a cycle C. Let f &isin; E(C) and let S<sub>i+1</sub> = (S<sub>i</sub> + e<sub>i+1</sub>) - f. Then f is not a bridge of S<sub>i</sub> + e<sub>i+1</sub>, so it is connected, has n-1 edges. Being connected, (S<sub>i</sub> + e<sub>i+1</sub>) - f has a spanning tree. This spanning tree has all n-1 edges and so is (S<sub>i</sub> + e<sub>i+1</sub>) - f. That is, S<sub>i+1</sub> is a spanning tree. Since S<sub>i</sub> is minmum weight spanning tree, wt(S<sub>i+1</sub>) &ge; wt(S<sub>i</sub>). So wt(e<sub>i+1</sub>) &ge; wt(f).</p>
+        
+        <p>Recall that T - e<sub>i+1</sub> has two components, each containng a vertex incident with e<sub>i+1</sub>. Also, C - e<sub>i+1</sub> is a path joining the two ends of e. Some edge of C - e<sub>i+1</sub> has an end in each component of e<sub>i+1</sub>, let f<sub>0</sub> be one such edge. Because f<sub>0</sub> has its ends in different componets of T - e<sub>i+1</sub>, f<sub>0</sub> has its ends in different components of F<sub>i</sub>. Therefore, f<sub>0</sub> was a candidate edge to add to F<sub>i</sub>, we chose e<sub>i+1</sub>, so wt(e<Sub>i+1</Sub>) &le; wt(f<sub>0</sub>).</p>
+        
+        <p>Thus, wt(e<sub>i+1</sub>) = wt(f<sub>0</sub>), so now we pick S<sub>i+1</sub> = (S<sub>i</sub> + e<sub>i+1</sub>) - f<sub>0</sub>. This is another spanning tree of G; it contains e<sub>1</sub>...e<sub>i+1</sub>, wt(S<sub>i+1</sub>) = wt(S<sub>i</sub>). Thus S<sub>i+1</sub> is a minmium weight spanning tree containing e<sub>1</sub>...e<sub>i+1</sub>.</p>
+        
+        <p>The algorithm in the notes is subtly different (<b>Primm's Algorithm)</b> - this one is called <b>Kruskal's Algorithm</b>.</p>
+        
+        <hr>
+        
+        <h3>Planar Graphs</h3>
+        
+        <p>A graph G is planar if it can be drawn in the plane so that no two edges cross.</p>
+        
+        <p><b>Which graphs are planar?</b></p>
+        
+        <p>Not all graphs are planar - the Petersen graph is an example of a graph that is not planar. No matter how you try to represent it in the plane, you have edges that cross.</p>
+        
+        <p>Every tree is planar, and therefore every forest is planar, since a forest is a series of trees.</p>
+        
+        <p>A graph is planar if and only if each of its components are planar.</p>
+        
+        <p>The <i>complete graph</i> notated as <code>K<sub>n</sub></code> is the graph with <code>n</code> vertices, with every pair having an edge joining them.</p>
+        
+        <p>We can see that <code>K<sub>1</sub>, K<sub>2</sub>, K<sub>3</sub>, K<sub>4</sub></code> are all planar. However, <code>K<sub>5</sub></code> is not.</p>
+        
+        <p>The <i>complete bipartite graph</i>, notated as <code>K<sub>p,q</sub></code> is the graph where the vertices partition into a set of size p and one of size q, and where everyone every one one of the p is adjacent to every one of the q.</p>
+        
+        <p><code>K<sub>1,n</sub></code> is a tree, so it will always be planar, Likewise, <code>K<sub>2,n</sub></code> is also planar for any n. <code>K<sub>3,3</sub></code> is not planar.</p>
+        
+        <p>As far as <i>cubes</i> go, in an n-dimensional space (<code>Q<sub>n</sub></code>), you want to look at all the spaces that have coordinates 0 or 1. In an n-cube, the vertices are all binary strings of length n. Edges join two vertices that differ in exactly one coordinate. <code>Q<sub>3</sub></code> is planar. <code>Q<sub>4</sub></code> is not.</p>
+        
+        <p>The tetrahedron, the 3-dimensional cube (3-regular, 4-cycles, 6 faces), the octahedron (4-regular, 3-cycles, 8 faces), the dodecahedron (3-regular, 5-cycles, 12 faces), and the icosahedron (5-regular, 3-cycles, 20 faces) are all the <i>Platonic solids</i>, which are polygons that are n-regular for some integer n, are made entirely of k-cycles for some integer k, and can be represented by a planar embedding.</p>
+        
+        <p>Table representation:</p>
+        
+        <table style="width:100%"><tr><th>Shape</th><th>Vertices</th><th>Edges</th><th>Faces</th></tr><tr><td>Tetrahedron</td><td>4</td><td>6</td><td>4</td></tr><tr><td>Hexahedron (Cube)</td><td>8</td><td>12</td><td>6</td></tr><tr><td>Octahedron</td><td>6</td><td>12</td><td>8</td></tr><tr><td>Dodecahedron</td><td>20</td><td>30</td><td>12</td></tr><tr><td>Icosahedron</td><td>12</td><td>30</td><td>20</td></tr></table>
+        
+        <p>There is a linear relationship between the number of edges, vertices and faces. It is <code>|V| + |E| = 2 + |F|</code>. This is called <i>Euler's formula</i>.</p>
+        
+        <hr>
+        
+        <p>The <i>Jordan Curve Theorem</i> underlies what distinguishes faces. If <code>C</code> is a simple closed curve in the plane <b>R</b><sup>2</sup>, then <b>R</b><sup>2</sup> \ C has precisely two components. Any arc in <b>R</b><sup>2</sup> joining point in different components of <b>R</b><sup>2</sup> \ C must intersect C.</p>
+        
+        <p>The <i>degree of a face</i> is the length of its boundary walk. Sum of the face lengths = 2 * number of edges. This is no coincidence, since you're traversing each edge twice.</p>
+        
+        <p>This lends itself to a <b>face-shake lemma</b>. If G is embedded in the plane, then &Sigma; <sub>f a face of C</sub> deg(f) = 2|E(G)|</p>
+        
+        <p>A recap on <b>Euler's Formula:</b> Let G be a connected graph embedded in the plane with set F of faces. Then,</p>
+        
+        <p><code>|V(G)| - |E(G)| + |F| = 2<br>&Rarr; -|E(G)| = 2 - |V(G)| - |F|<br>&Rarr; |E(G)| = |V(G) + |F| - 2</code></p>
+        
+        <p><b>Proof:</b> Our proof is by induction on the number of cycles in G.<br>Base case: G has no cycles. Since G is connected, G is a tree and so |E(G)| = |V(G)| - 1. In any planar embedding of G, there is only one face.<br>If G has more than 0 cycles, let e be an edge of G in a cycle C. One face of G is inside C, and the other is outside of C, so these are different faces of G. These faces become one face of G-e, so G-e has one fewer face than G. Since e is not a bridge, G-e is connected. By induction on # of cycles, |V(G-e)| - |E(G-e)| + |F(G-e)| = 2.</p>
+        
+        <hr>
+        
+        <p>lost last lectures notes</p>
+        
+        <hr>
+        
+        <h3>Colouring Graphs</h3>
+        
+        <p>Given a graph, colour the vertices of the graph with as few colours as possible, so that adjacent vertices get different colours.</p>
+        
+        <p>An <i>n-colouring</i> of a graph is a colouring where n colours are used. It is not obvious when the least colouring is found. The <i>chromatic number</i> of a graph G, denoted &Chi;(G), is the smallest n such that G has an n-colouring.</p>
+        
+        <p>&Chi;(G) = 1 if and only if G has no edge.</p>
+        
+        <p>&Chi;(G) = 2 if and only if G has an edge and is bipartite. (Then partitions A and B will have their own colour.)</p>
+        
+        <p>&Chi;(G) = 3 if and only if ... we have no idea... We don't know what makes a graph have a chromatic number of 3.</p>
+        
+        <p>Algorithm: pick an ordering of vertices, then find the smallest available colouring going from left to right on the ordering. This is called a <i>greedy colouring</i>.</p>
+        
+        <p>What is a good order for the vertices?</p>
+        
+        <p><i>Lowest degree end rule:</i> Find a vertex of smallest degree, put it at the end, then remove the vertex and all its associated edges. Then find the new lowest degree vertex and put it at the front of the list. Repeat. If all of the edges are the same degree, pick one at random. Keep track of the degreea of the vertices you delete as you delete them. Then the worst that can happen is the biggest number + 1 (representing the newest colour), as the degree represents the amount of vertices adjacent to that vertex that have already been coloured.</p>
+        
+        <p>Critical point: if the biggest degree that happens is n, you know you are not going to need more than n + 1 colours for the whole graph.</p>
+        
+        <p>We can prove that every planar graph has at most, a 6-colouring. This is because a planar graph will have degree at most 5 when picked out by the algorithm.</p>
+        
+        <p><b>Theorem:</b> every planar graph has a vertex with degree at most 5. Corollary is: evrey planar graph has &Chi;(G) &le; 6.</p>
+        
+        <p><b>Proof:</b> We can assume G is connected. Consider a componet C of G. If |V(C)| &le; 2, then there is a vertex of degree &le; 1. Otherwise, |V(C)| &ge; 3 and C is connected and C is planar. We saw previously that |E(C)| &le; 3|V(C)| - 6.</p>
+        
+        <p>The average degree of C is (&Sigma;<sub>v&isin;V(C)</sub> deg(V)) / |V(C)| <br>= 2|E(C) / |V(C)| <br>&le; (2(3|V(C)| - 6)) / |V(C)| <br>= 6 - (12 / |V(C)|) <br>&lt; 6.</p>
+        
+        <hr>
+        
+        <p><b>5-Colour Theorem</b>: Let G be a planar graph. Then, &Chi;(G) &le; 5.</p>
+        
+        <p><b>Proof</b>: By induction on |V(G)|. If |V(G)| &le; 5, then this follows from the trivial oversation that &Chi;(G) &le; |V(G)|. For larger G, we know G has a vertex v of degree(v) &le; 5.</p>
+        
+        <p>Idea: colour G - v so that two neighbours of v get same colour. One possible problem: every two neighbours of v are adjacent. No problem, since the graph this descrcibes (K<sub>5</sub>) is not planar.</p>
+        
+        <p>So, colour G-v by induction. Since there are 5 colours, one colour does not appear in any neighbour of v. This colour can be given to v, to extend the reduction of G-v to all of G.</p>
+        
+        <p>Now suppose deg(v) = 5. Because K<sub>5</sub> is not planar, there are twe vertices u, w that are neighbour of v but are not adjacent...</p>
+        
+        <hr>
+        
+        <h3>Kuratowski's Theorem</h3>
+        
+        <p>A graph is not planar is and only if it contains a <i>subdivision</i> of either K<sub>3,3</sub> or K<Sub>5</Sub>. So either find a planar embedding, or find a subdivision of either K<sub>3,3</sub> (most common) or K<sub>5</sub>.</p>
+        
+        <p>Let G be a graph, and let e be an edge of G incident with vertices u and v. The graph derived from G by removing e and adding a new vertex w, with neighbours u and v is the <i>edge-subdivision</i> of G at e.</p>
+        
+        <p>A graph H is a <i>subdivsion</i> of a graph G if there is a sequence G = G<sub>0</sub>, G<sub>1</sub>... G<sub>k</sub> = H of graphs G<sub>i</sub> such that, for i = 1...k, G<sub>i</sub> is an edge subdivision of G<sub>i-1</sub> of some edge e<sub>i-1</sub> of G<sub>i-1</sub>.</p>
+        
+        <p>Fact</p>
+        
+        <hr>
+        
+        <h3>Matchings and Covers</h3>
+        
+        <p>A <i>matching</i> in a graph G is a <b>set of edges</b> M, such that each vertex of G is incident with <b>at most</b> one edge in M.</p>
+        
+        <p>The empty set of edges is a matching in any graph. This is the smallest matching in a graph.</p>
+        
+        <p>A <i>perfect matching</i> is a matching M in which every vertex is incident with exactly one edge of M.</p>
+        
+        <p>Fact: For a graph G and a matching M, in G, the number of edges in M is at most (|V(G)| / 2).</p>
+        
+        <p>Fact: A matching M in a graph is perfict if and only if the number of edges in M = (|V(G)| / 2). As a corollary, if there is a perfect matching, the number of vertices is even.</p>
+        
+        <p>We use &mu;(G) to denote the size of a largest matching in a graph G.</p>
+        
+        <p>&mu;(C<sub>8</sub>) = 4<br>&mu;(C<sub>7</sub>) = 3<br>&mu;(K<sub>6</sub>) = 3</p>
+        
+        <p>&mu;(C<sub>n</sub>) = &lfloor;n/2&rfloor; = &mu;(K<sub>n</sub>)</p>
+        
+        <p>&mu;(K<sub>p,q</sub>) = min{p,q}</p>
+        
+        <p>A <i>cover</i> (of the edges by vertices) in a graph G is a set C of vertices such that every edge of G is incident with at least one vertex in C. They are kind of dual inverse concepts. The trivial cover for any graph is the entire set of vertices V(G). This is the largest cover any graph can have.</p>
+        
+        <p>We use &tau;(G) to denote the size of a smallest cover of G.</p>
+        
+        <p>&tau;(C<sub>8</sub>) = 4<br>&tau;(C<sub>7</sub>) = 4<br>&tau;(K<sub>6</sub>) = 5</p>
+        
+        <p>&tau;(C<sub>n</sub>) = &lceil;n/2&rceil;<br>&tau;(K<sub>n</sub>) = n - 1</p>
+        
+        <p>&tau;(K<sub>p,q</sub>) = max{p,q}</p>
+        
+        <h3>K&ouml;nig's Theorem</h3>
+        
+        <p>For a bipartite graph G, &mu;(G) = &tau;(G).</p>
+        
+        <hr>
+        
+        <p><b>Lemma:</b> Let G be a graph, let M be a matching in G, and let C be a cover of G. The, |M| &le; |C|.</p>
+        
+        <p><b>Proof:</b> For each edge uv of M, at least one of u and v is in C (because C is a cover).</p>
+        
+        <p>Define f(uv) to be any vertex in C &cap; {u,v}. To see that f:M &rarr; C is one to one, we note that no vertex in C can be incident with more than one edge in M, because M is a matching. Therefore, |M| &le; |C|. QED.</p>
+        
+        <p><b>Corollary:</b> let G be a graph, and let M,C be a matching and a cover in G. If |M| = |C|, then M is a maximum matching (largest) and C is a minimum cover (smallest).</p>
+        
+        <p><b>Proof:</b> let M' be any matching and let C' be any cover. By the lemma, then |M'| &le; |C| and |M| &le; |C'|.</p>
+        
+        <p>Therefore, |M'| &le; |C| = |M|, so |M'| &le; |M|. Thus, M is a maximum matching.</p>
+        
+        <h3>M-Alternating Path</h3>
+        
+        <P>An <i>M-Alternating path</i> is a path of a graph G where every other edge is part of some matching M of G.</P>
+        
+        <p>An <i>M-Augmenting path</i> is an M-alternating path that starts and ends at vertices not incident in G with any edge of M.</p>
+        
+        <p><b>Theorem:</b> if M is a matching in a graph G, and there is an M-augmenting path P, then M (circleplus) E(P) is also a matching and |M (circleplus) E(P)| = |M| + 1.</p>
+        
+        <p>M (circleplus) E(P) consists of those edges of M not in P and those edges of P not in M. (Symmetric difference; (M &cup; E(P)) \ M &cap; E(P))</p>
+        
+        <p>In the same vein, |C| &le; |C'|, so C is a minimum cover.</p>
+        
+        <hr>
+        
+        <p>A <i>saturated</i> vertex V in a matching M is a vertex such that at least one of the edges attached to V are in M.</p>
+        
+        <p>An <i>unsaturated</i> vertex V in a matching M is a vertex such that none of the edges attached to V are in the matching.</p>
+        
+        <p>How do you find a bigger matching given a current matching? Objective is to try to find an augmenting path.</p>
+        
+        <p>Look for unsaturated vertices, those will be your start and end points (if there is more than one).</p>
+        
+        <p>Find a (minimum?) cover that is the same size as the matching. That proves that the matching is maximum, as from a previous theorem.</p>
+        
+        <p>Let G be a bipartite graph and M a matching in G. Our objective is to either find an M-augmenting path (and therefore a matching with size |M| + 1), or find a cover C of G such that |C| = |M|, proving that M is the maximum matching.</p>
+        
+        <p>For a bipartite graph with a matching M, set x<sub>0</sub> to be the set of M-unsaturated vertices in A and try to find an M-augmenting path incident with the vertices in x<sub>0</sub></p>
+        
+        <P>Want to keep track of vertices you are visiting along the way.</P>
+        
+        <p>Set x = x<sub>0</sub> (x &sube; A) and y = &empty; (y &sube; B) When you visit a vertex in your path, add the vertex to its appropriate set. <br><br>Eventually x = all the vertices in A reached (so far) by an M-alternating path originating in x<sub>0</sub> and y = all the vertices in B reached (so far) by an M-alternating path originating in x<sub>0</sub></p>
+        
+        <P>Grow M-alternating paths as long as possible, that is until none of them can be grown or extended further.</P>
+        
+        <P>Eventually, one of two things happens:</P>
+        
+        <ol>
+        <li>There is a vertex in Y that is not M-saturated. Implies an augmenting path can be found.</li>
+        <li>For every vertex a &isin; x, for every edge ab incident w/ a, b &isin; y. Implies that all vertices are M-saturated, which means a perfect matching between y and x \ x<sub>0</sub>. No edge connects x and B \ Y that is not in M. Such an edge would be a violation because it would extend an M-alternating path. Thus, the vertices in A \ X and Y form a cover of G. You should also recognize that the vertices in A \ X are not in x<sub>0</sub> so they are all M-saturated. Si A \ X and B \ Y form their own matching, starting with y<sub>0</sub> the M-unsaturated vertices in B. This would give you the same partitions.</li></ol>
+        
+        <h3>Hall's Theorem</h3>
+        
+        <p>Let G be a bipartite graph with bipartition (A,B). There is a matching in G that saturates all the vertices in A iff for every subset S of A, |N(S)| &ge; |S|.</p>
+        
+    </body>
+</html>

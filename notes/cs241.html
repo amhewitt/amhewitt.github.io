@@ -1,0 +1,1328 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>CS 241 S18: LECTURE NOTES</title>
+        <meta name="description" content="N. Naeem's section.">
+        <link rel="stylesheet" href="../main.css">
+    </head>
+    <body>
+        
+        <header><p><a href="notesl.html">&larr; Back to notes page</a></p></header>
+        
+        <h1>SEQUENTIAL PROGRAMMING LECTURE NOTES</h1>
+        <h2>Professor: Nomair Naeem</h2>
+        
+        <hr>
+        
+        <h3>Introduction</h3>
+        
+        <P>The goal of this course is to be able to describe a relationship between high-level programming languages (C, C++) and machine-level data representations (typically, binary).</P>
+        
+        <p>You will be expected to write programs that read in programs (of a certain language) and output programs (of a different language). These assignments may be done in either Racket or C++.</p>
+        
+        <h3>Data Representations</h3>
+        
+        <p>A <i>bit</i> is a single binary digit, which can be either <code>0</code> or <code>1</code>. A byte is a sequence of right bits. A <i>word</i> is a machine-dependent (that is, different computers will output different words that mean the same thing) sequence of bits. In a 32-bit machine, 32 bits make a word.</p>
+        
+        <p>There is also a different unit of measurement between a bit and a byte that is called a <i>nibble</i> (4 bits) but we do not use this terminology in this course.</p>
+        
+        <p>For instance, let's take the string <code>10000011</code>. This could mean:</p>
+        
+        <ul>
+        <li><b>-3</b> in signed binary</li>
+        <li><b>One million and eleven</b> in decimal</li>
+        <li><b>67</b> in unsigned binary</li>
+        <li><b>-61</b> in twos complement binary</li>
+        <li>The ASCII character <b>C</b> when interpreted as a character</li>
+        <li>...or it could mean nothing at all (<b>garbage</b>)</li>
+        </ul>
+        
+        <p><i>Binary representation</i> deals in powers of 2 (0,1), while <i>hexadecimal representation</i> deals in powers of 16 (0 to 9, and then A to F). Given <code>n</code> bits, the unsigned binary range is <code>0</code> to <code>2<sup>n-1</sup></code>.</p>
+        
+        <h3>Representing Negative Numbers</h3>
+        
+        <p>One idea to represent negative numbers is to reserve abit to represent the sign (typically the leftmost one) and use the rest to represent the magnitude. Let <code>0</code> represent "positive" and <code>1</code> represent "negative".</p>
+        
+        <p>Problem: this allows for two representations of zero (<code>10000000</code> and <code>00000000</code>) and it requires different circuits to do addition and subtraction. We would much rather use the same circuit.</p>
+        
+        <p>A more popular solution is <i>twos complement</i> which uses congruence to represent a negative number.</p>
+        
+        <p>To convert a positive number to negative in twos complement, simply flip the bits and add one.</p>
+        
+        <p>Representing -6:
+        <br>
+        <code>0110</code> <br>
+        <code>1001 ;; flip the bits</code> <br>
+        <code>1010 ;; add 1</code></p>
+        
+        <p>And the same for negative to positive.</p>
+        
+        <p>Representing --6 (=6):<br>
+        <code>1010</code><br>
+        <code>0101 ;; flip the bits</code><br>
+        <code>0110 ;; add 1</code><br></p>
+        
+        <p>When we are only given numbers, unless you know the exact representation being used, you cannot make any reasonable calculations. We must know if the number is signed or unsigned in order to make any comparisons, and we need to tell the processor which comparisons we are making.</p>
+        
+        <h3>Machine Language</h3>
+        
+        <p><i>Machine language</i> is a set of machine instructions. A <i>machine instruction</i> is a sequence of bits that has exactly one meaning on a particular architecture. Different architectures derive different meanings from the same sequence of bits.</p>
+        
+        <p><b><i>MIPS</i></b> is a type of machine language. It is not the most popular machine language (however, we use it in this course because it's easier than x86). There are two common types of MIPS: <code>MIPS32</code> and <code>MIPS64</code>, that determine the size of an instruction (we use 32 in this course, thus instructions are 32 bits long).</p>
+        
+        <p>The <i>control unit</i> is responsible for fetch/execute instructions, timing unit, and communicating with peripherals. The <i>ALU (arithmetic logic unit)</i> takes care of operations and comparisons.</p>
+        
+        <p>There are two types of memory we are concerned with. The first type is <i>registers</i>, which are located on the chip and are extremely fast. The second is <i>random access memory (RAM)</i>, which is not directly attached to the processor, so it is many factors slower than using the registers. However, they can store much more information.</p>
+        
+        <p>The MIPS processor has 32 general purpose registers (you can put anything you want on them). You need 5 bits to mention any register (since <code>2<sup>5</sup> = 32</code>). There are some conventions:</p>
+        
+        <ul>
+        <li><code>$0</code> always contains 0</li>
+        <li><code>$30</code> and <code>$31</code> contain special values - addresses to RAM. More on their signifcance later.</li>
+        <li>Other registers with special names: <code>PC, IR, hi, lo</code>. More on those later.</li></ul>
+        
+        <p>RAM is much slower, and holds a lot more memory (<code>2<sup>9</sup> bytes)</code>. We can visualize this as a byte array. Each slot in the array holds four bytes (use hexadecimal to keep track as a convention). In turn, we often use addresses that are multiples of 4.</p>
+        
+        <p>Operations can only be performed on values in registers. The implication here is that we might need to load and store data from RAM before we can play around with it.</p>
+        
+        <p>A program is one part of the memory, which also contains other sections. The processor does not know which part of the memory is code.</p>
+        
+        <p>The special register <code>PC</code> (program counter) helps the processor execute a program. PC is 32 bits in size and contains the address of the next instruction to execute. A special program, called the <i>loader</i>, loads the program into memory, creating different sections, and then the loader sets up PC to the starting address of the code section. In convention:</p>
+        
+        <ul>
+        <li>Program is loaded at start address 0</li>
+        <li><code>PC &larr; 0</code></li></ul>
+        
+        <p>The processor starts the program by running the fetch/execute cycle algorithm. It's important to note that this is implemented in the hardware and is not a program.</p>
+        
+        <p>Pseudocode:</p>
+        
+        <p><code>PC &larr; 0<br>
+            loop {<br>
+            IR &larr; MEM[PC] ;; fetches 32 bit into instruction register<br>
+            PC = PC + 4 ;; going to next instruction<br>
+            DECODE ;; figure out what the instruction that you just fetched is<br>
+            EXECUTE<br>
+            }</code></p>
+        
+        <h3>MIPS Instructions</h3>
+        
+        <p>A program terminates by having the loader place the return address, set up by the loader, in <code>$31</code>. To stop, a program must jump to the address held in that register. This is accomplished by the instruction <code>jr $31</code> (jump to the value in register 31).</p>
+        
+        <p><code>mult $s, $t</code> multiplies the contents of registers s and t. First 32 bits stored in <code>lo</code>, last 32 bits stored in <code>hi</code>.</p>
+        
+        <p>actually this shit is ez nevermind</p>
+        
+        <h3>Procedures in Assembly</h3>
+        
+        <p>The same registers are accessible to all code; however, we might need a way to preserve or protect register values. How do we make a procedure call/return from it? Here is an example:</p>
+        
+        <p><code>mainline &rarr; $5 (important data) &rarr; call f<br>
+            f &rarr; overwrite $5 &rarr; return</code></p>
+        
+        <p>Now you've lost the stuff in <code>$5</code>. Two options to mitigate this.</p>
+        
+        <p>The first is to divide registers between procedures. The issue is that we only have a finite amount of registers, so we might run out at a certain point. This also doesn't work for recursive calls for the same reason.</p>
+        
+        <p>Another option is that each procedure should guarantee that it leaves register values unchanged. To do this, we should backup the original values of registers in RAM, by resreving and using a chunk of RAM in a systematic way. Thankfully, the MIPS loader helps by setting up <code>$30</code> to just past the last available memory spot. It's a bookmark of sorts, and we refer to it as the <i>stack pointer</i>.</p>
+        
+        <p>Memory is being used as a stack. The procedure should push register values at the start. When pushing something, you must push 4 bytes (32 bits). Since the stack pointer points to just past the last available memory slot, the first free word is located at <code>-4($30)</code>. Use a store word to do this.</p>
+        
+        <p>An assembly equivalent of <code>push</code>:</p>
+        
+        <p><code>sw $r, -4($30)<br>
+            lis $s<br>
+            .word -4<br>
+            add $30, $30, $s</code></p>
+        
+        <p>An assembly equivalent of <code>pop</code>:</p>
+        
+        <p><code>lw $r, -4($30)<br>
+            lis $s<br>
+            .word -4<br>
+            sub $30, $30, $s</code></p>
+        
+        <p>The procedure should pop register values just before returning.</p>
+        
+        <p>This introduces another problem: we need to remebmer what the return address of a prodecure call is, so we know hwere to resume once we hit procedure return.</p>
+        
+        <p><code>jalr $s</code> does this. You should push the original value of $31 on your stack. You will then want to pop $31 after your jalr call, otherwise you can't end your program.</p>
+        
+        <h3>MIPS Assembler</h3>
+        
+        <p>Assembly language &rarr; machine language (binary)</p>
+        
+        <p>Your input file is a text file representing an <code>.asm</code> program, and output is a binary file representing MIPS machine code. You first want to read the input string and make sense out of it, then translate into binary.</p>
+        
+        <p>This typically takes two stages. The first is <i>analysis</i>, where you make sense of the input to understand its meaning and intent. This is done through tokenizing, scanning, and lexical analysis, where the string is broken down into a smaller sequence of characters. Afterwards, parsing id one, where you make sense of what each line means. This is done in an <i>ad hoc</i> way, meaning through the code, check what each line represents and take an action based off of that. It is much easier to check that the syntax is correct than it is to check for all the possible ways that the syntax could be incorrect.</p>
+        
+        <p>The second step is <i>synthesis</i>, where we output equivalent machine instructions in binary. The goal is to produce the 32 bits representing the instruction within the assembler and output them.</p>
+        
+        <p>This brings up the issue with labels. The use of the label in <code>beq</code> and <code>bne</code> have to be converted to an instruction offset, defined by <code>(address of label definition &minus; PC) &divide; 4</code>. As a result, the assembler needs to be able to keep track of what instruction it is currently at. There is an algorithm for this:</p>
+        
+        <p><Code>initialize PC to 0<br>increment PC by 4 for each instruction and .word<br>when a label is defined, store the lexeme and PC in a map(string, int)<br>when a label is used, use the formula if used in a beq/bne and just output the address where the label is defined if in a .word</Code></p>
+        
+        <p>There are some possible errors with this. You can't define labels more than once, so before inserting into the symbol table you should check that a mapping does not already exist. You can also use a label that does not exist in the table.</p>
+        
+        <p>However, labels can be defined <i>after</i> they are used while still being a valid program.</p>
+        
+        <p>The solution here is to write an assembler that makes two passes through the program. In the first pass, you parse where possible, tokenize, and create the symbol table. In the second pass, you check the uses of labels to make sure that they're all valid and generate output.</p>
+        
+        <h3>Bit Manipulation</h3>
+        
+        <p><i>Left bit-shift</i> is written as <code>x &lt;&lt; n</code> and is the equivalent of calculating <code>x &times; 2<sup>n</sup></code>. Some examples:</p>
+        
+        <p><code>0001 &lt;&lt; 0 = 0001<br>0001 &lt;&lt; 1 = 0010<br>0001 &lt;&lt; 2 = 0100<br>0001 &lt;&lt; 3 = 1000</code></p>
+        
+        <p><i>Right bit-shift</i> is written as <code>x &gt;&gt; n</code> and is the equivalent of calculating <code>x &divide; 2<sup>n</sup></code>. Some examples:</p>
+        
+        <p><code>0100 &gt;&gt; 0 = 0100<br>0100 &gt;&gt; 1 = 0010<br>0100 &gt;&gt; 2 = 0001<br>0100 &gt;&gt; 3 = 0000<br>1000 &gt;&gt; 1 = 1100<br>1000 &gt;&gt; 2 = 1110</code></p>
+        
+        <p><i>Bitwise and</i> is calculated as follows:</p>
+        
+        <p><code>1100101 &amp;<br>0101101<br><hr>0100101</code></p>
+        
+        <p><code>1100101 |<br>0101101<br><hr>1101101</code></p>
+        
+        <p>Following is an example of encoding an <code>add</code> instruction. You want to use bit manipulation and shift bits so that they are in the right place. Recall that integers are 32 bits in size.</p>
+        
+        <p><code>add $3(d), $2(s), $1(t)</code></p>
+        
+        <p><code>000000 sssss ttttt ddddd 00000 100000</code></p>
+        
+        <p><code>int opcode = 0<br>int funcCode = 32 ;; code for add instruction<br>int s = 2 ;; get from lexeme of third token<br>int t = 4 ;; get from lexeme of last token<br>int d = 3 ;; get from lexeme of second token<br>int instr = opcode &lt;&lt; 26 | s &lt;&lt; 21 | t &lt;&lt; 16 | d &lt;&lt; 11 | funcCode</code></p>
+        
+        <p>This produces 32 bits inside the <code>instr</code> variable that will be outputted.</p>
+        
+        <hr>
+        
+        <h3>Regular Languages</h3>
+        
+        <p>A <i>regular language</i> is built using a finite language. They allow for union, concatenation, and repetition.</p>
+        
+        <p><i>Union</i>: <code>L<sub>1</sub> &cup; L<sub>2</sub> = {x | x &isin; L<sub>1</sub> or x &isin; L<sub>2</sub>}</code></p>
+        
+        <p><i>Concatenation</i>: <code>L<sub>1</sub> &bull; L<sub>2</sub> ={xy | x &isin; L<sub>1</sub>, y &isin; L<sub>2</sub>}</code></p>
+        
+        <p>Example:<br>L<sub>1</sub> = {dog, cat}<br>L<sub>2</sub> = {fish, &epsilon;}<br>L<sub>1</sub> &bull; L<sub>2</sub> = {dogfish, dog, catfish, cat}</p>
+        
+        <p><i>Repetition</i>: <code>L* = &epsilon; &cup; {xy | x &isin; L*, y &isin; L}</code></p>
+        
+        <p>Example:<br>L = {a, b}<br>L* = {&epsilon;, a, b, aa, ab, ba, bb, aaa ...}</p>
+        
+        <p>A <i>regular expression</i> is one way of specifying a regular language. They are a convenient shorthand for specifying regular languages, but they are not very convenient for recognition. They have the following rules:</p>
+        
+        <p>&empty; = no word<br>&epsilon; = empty word<br>a (a &isin; &Sigma;) = word just containing the symbol a<br>R<sub>1</sub>R<sub>2</sub> (concatenation, where R<sub>1</sub> and R<sub>2</sub> are regular expressions) = words matched by R<sub>1</sub> followed by a word matching R<sub>2</sub><br>R<sub>1</sub> | R<sub>2</sub> (union/choice/alternation) = words matched by R<sub>1</sub> or R<sub>2</sub><br>R* (repetition) = zero or more repetitions of words matched by R<br>a+ = aa*<br>a? = &epsilon; | a</p>
+        
+        <h3>(Non)-Deterministic Finite Automata</h3>
+        
+        <p>A <i>deterministic finite automata</i> is a recognition algorithm for a regular language. A DFA has five components:</p>
+        
+        <ul><li>&Sigma; = alphabet associated with the language</li>
+        <li>Q = set of states</li>
+        <li>q<sub>0</sub> = unique start state (q<sub>0</sub> &isin; Q)</li>
+        <li>A = set of accepting states. A &sube; Q</li>
+        <li>&delta; = transition state (more below), Q x &Sigma; &rarr; Q</li></ul>
+        
+        <p>Examples of transition states:</p>
+        
+        <p>Transition from state X to Y on symbol a: <code>&delta;(X, a) = Y</code><br>Transition from state Y to Y on symbol a: <code>&delta;(Y, a) = Y</code></p>
+        
+        <p>A transition state in a DFA can only get you to one state - hence deterministic.</p>
+        
+        <p>We assume the presence of an implicit error state. If a transition is not defined for a given symbol, then you transition to the error state. Once there, you always stay there.</p>
+        
+        <p>A language is regular if there exists a DFA specifying it. So to prove a language is regular, it suffices to draw its DFA.</p>
+        
+        <p>Following is the algorithm for a DFA recognizer.</p>
+        
+        <p><code>input: DFA defined by &Sigma;, Q, q<sub>0</sub>, A, &delta;<br>input: word w = a<sub>1</sub>a<sub>2</sub>...a<sub>n</sub> (a<sub>i</sub> &isin; &Sigma;)<br>output: w &isin; L(DFA) ? true : false<br><br>state &larr; q<sub>0</sub><br>for i in 1 to n<br>state &larr; &delta;(state, a<sub>i</sub>)<br>endfor<br><br>state &isin; A ? return true : return false</code></p>
+        
+        <p>A <i>non-deterministic finite automata</i> is similar to a DFA, but a transition state can take you to any of a set of states rather than just one state. When evaluating an NFA, should look for any path to an accepting state - keep following all paths until the end of the input. An NFA has five components:</p>
+        
+        <ul><li>&Sigma; = alphabet associated with the language</li>
+        <li>Q = set of states</li>
+        <li>q<sub>0</sub> = unique start state (q<sub>0</sub> &isin; Q)</li>
+        <li>A = set of accepting states. A &sube; Q</li>
+        <li>&delta; = transition state, Q x &Sigma; &rarr; P(Q)</li></ul>
+        
+        <p>Following is the algorithm for an NFA recognizer:</p>
+        
+        <p><code>input: NFA defined by &Sigma;, Q, q<sub>0</sub>, A, &delta;<br>input: word w = a<sub>1</sub>a<sub>2</sub>...a<sub>n</sub> (a<sub>i</sub> &isin; &Sigma;)<br>output: w &isin; L(NFA) ? true : false<br><br>states &larr; {q<sub>0</sub>}<br>for i in 1 to n<br>states &larr; &cup; of s in states &delta;(s, a<sub>i</sub>)<br>endfor<br><br>states &cap; A not empty ? return true : return false</code></p>
+        
+        <h3>Subset Construction</h3>
+        
+        <p>A language is also regular if you can write an NFA for it. In fact, every NFA can be written as a DFA.</p>
+        
+        <p>The algorithm for doing this is called <i>subset construction</i>. The goal is to create a DFA state for each set of NFA states that you could be at, having seen some part of the input. Here is an example.</p>
+        
+        <p>L = {c, a, b} &cup; {strings over {a, b, c} with an even number of a's}<br>input: caba</p>
+        
+        <table style="width:100%"><tr><th>Read</th><th>Unread</th><th>States</th></tr><tr><td>&empty;</td><td>caba</td><td>1</td></tr><tr><td>c</td><td>aba</td><td>{2,6}</td></tr><tr><td>ca</td><td>ba</td><td>{3,5}</td></tr><tr><td>cab</td><td>a</td><td>{4,5}</td></tr><tr><td>caba</td><td>&empty;</td><td>{6} accept</td></tr></table>
+        
+        <h3>&epsilon;-NFA</h3>
+        
+        <p>An <i>&epsilon;-NFA</i> is an NFA with <i>&epsilon;-transitions</i>, which is a free pass to the next state. They do not consume input symbols. &epsilon;-NFAs are typically used to glue other NFAs and DFAs together.</p>
+        
+        <p><i>&epsilon;-closure</i> is a set of states s reached using 0 or more &epsilon;-transitions.</p>
+        
+        <p>Following is the algorithm for an &epsilon;-NFA recognizer:</p>
+        
+        <p><code>input: &epsilon;-NFA defined by &Sigma;, Q, q<sub>0</sub>, A, &delta;<br>input: word w = a<sub>1</sub>a<sub>2</sub>...a<sub>n</sub> (a<sub>i</sub> &isin; &Sigma;)<br>output: w &isin; L(&epsilon;-NFA) ? true : false<br><br>states &larr; &epsilon;-closure{q<sub>0</sub>}<br>for i in 1 to n<br>states &larr; &epsilon;-closure(&cup; of s in states &delta;(s, a<sub>i</sub>))<br>endfor<br><br>states &cap; A not empty ? return true : return false</code></p>
+        
+        <p>An &epsilon;-NFA can be translated directly into a DFA, or into an NFA and then a DFA.</p>
+        
+        <p><b>Kleene's Theorem</b> states that a language is regular if there exists a regular expression, DFA, NFA, or &epsilon;-NFA for the language.</p>
+        
+        <p>Informally, a regular expression maps to an &epsilon;-NFA.</p>
+        
+        <hr>
+        
+        <h3>Context-Free Grammars</h3>
+        
+        <p>What specific features of C (or Racket) cannot be verified by a DFA? Consider <code>&Sigma; = { (, ) }</code>, and the language accepted by L is such that the parentheses are balanced.</p>
+        
+        <p>e.g.</p>
+        
+        <p><Code>() , ()(), (()), (()())</Code> all in L.<br><Code>)(, ())</Code> not in L.</p>
+        
+        <P>No finite number of states will detail this language, so there is no DFA to solve this. For a DFA that allows for <code>n</code> levels of nesting, you can come up with a string in the language that has <code>n + 1</code> levels of nesting.</P>
+        
+        <p>This requires a new concept - <i>context-free languages</i>, which are languages that are specified by a context-free grammar. Intuition: balanced parentheses.</p>
+        
+        <p><code>S &rarr; &epsilon; ;; A word in the language is either empty...<br>S &rarr; ( S ) ;; or a word in the languages surrounded by ()...<br>S &rarr; SS ;; or the concatenation of two words in the language.</code></p>
+        
+        <p>A shorthand for expressing this is <code>S &rarr; &epsilon; | ( S ) | SS</code>.</p>
+        
+        <p>In general, a rule written as <code>A &rarr; &beta;</code> means that &beta; is obtainable by one application of a grammar rule.</p>
+        
+        <p>Formally, a <i>context-free grammar</i> consist of an alphabet <code>&Sigma;</code>, a set of terminal symbols <code>T</code> and a finite, nonempty set <code>N</code> of non-terminal symbols (N &cap; &Sigma; is empty). We use <code>v</code> (for vocabulary) to denote <code>N &cup; &Sigma;</code>. We also recognize the existence of a finite nonempty set <code>P</code> of production rules. Productions have the form <code>A &rarr; &beta;</code>, where <CODE>A &isin; N</CODE> and <code>&beta; &isin; v*</code>.</p>
+        
+        <p>Conventions:</p>
+        
+        <ul>
+        <li>a, b, c... elements of &Sigma; (characters)</li>
+            <li>x, y, z... elements of &Sigma;* (strings)</li>
+            <li>A, B, ...S... elements of N (non-terminals)</li>
+            <li>S... start symbol</li>
+            <li>&alpha;, &beta;, &gamma;... elements of V* (strings that may or may not contain &epsilon;)</li>
+        </ul>
+        
+        <p>We write <code>&alpha; A &beta; &rarr; &alpha; &gamma; &beta;</code> if there is a production rule <code>A &rarr; &gamma;</code>. (RHS is derivable from LHS in one step)</p>
+        
+        <p>We write <code>&alpha; &rarr;* &beta;</code> if <code>&alpha; &rarr; &gamma;<sub>1</sub> &rarr; &gamma;<sub>2</sub> &rarr;... &rarr; &gamma;<sub>n</sub> &rarr; &beta;, n &ge; 0</code> (in other words, if &beta; is derivable from &alpha; in zero or more derivation steps - you get there eventually)</p>
+        
+        <p><code>L(G)</code> denotes the language specified by <code>G = { w &isin; &Sigma;* | S &rarr;* w }</code>. A language <code>L</code> is <i>context-free</i> if <code>L = L(G)</code> for some context-free grammar <code>G</code>.</p>
+        
+        <p><I>Leftmost derivation</I> means to always expand the leftmost symbol first. <i>Rightmost derivation</i> means to always expand the rightmost symbol first.</p>
+        
+        <p>Derivations can be expressed naturally and succintly in a tree structure called a <i>parse tree</i>. For evrey leftmost or rightmost derivation, there should be a unique parse tree.</p>
+        
+        <h3>Parsing</h3>
+        
+        <p><i>Parsing</i> means to provide a derivation for the input string to so that you can start at the start symbol <code>S</code>, follow any number of rules in the CFG, and then end with the input string. For the following CFG, here is an example of a parse.</p>
+        
+        <p><code>S &rarr; A<br>A &rarr; B g C<br>B &rarr; a b<br>B &rarr; c d<br>C &rarr; h<br>C &rarr; e f</code></p>
+        
+        <p>Input: <code>abgef</code></p>
+        
+        <p><code>A &rarr; B g C &rarr; a b g C &rarr; a b g e f</code></p>
+        
+        <p>You could also go a different route.</p>
+        
+        <p><code>A &rarr; B g C &rarr; B g e f &rarr; a b g e f</code></p>
+        
+        <p>Both of these derivations are proof that the word is in the language.</p>
+        
+        <p>A <i>parse tree</i> is a structure made for easy traversal of the parsed output. It also shows the rules followed to get from beginning to end. The root is always the start symbol, and the leaves are always terminals. A derivation uniquely defines a parse tree.</p>
+        
+        <p>We would like an input string to have a unique derivation or parse tree. This means that we should force, or normalize, a way of deriving strings. There are two ways to do this.</p>
+        
+        <p><i>Leftmost derivation</i> chooses the leftmost nonterminal to expand in all circumstances. In other terms, <code>x A &beta; &rarr; x &alpha; &beta;</code>, where x is any string of terminals, A is any nonterminal, &alpha; is a terminal derived from A, and &beta; is any string of nonterminals.</p>
+        
+        <p><i>Rightmost derivation</i> chooses the rightmost nonterminal to expand in all circumstances.</p>
+        
+        <p>We say that a grammar is <i>ambiguous</i> is there is a string for which there exists multiplt parse trees while using the same derivation style. Ambiguity in a grammar does nto matter for recognition, but it is an issue for parsing. The goal of parsing is to create a derivation/parse tree. We don't want ambiguity there, since we want a given input string to always give the same parse tree.</p>
+        
+        <p>Problem: Proving that a CFG is unambiguous is undecidable - there is no algorithm that can do this. Proving that a grammar is ambiguous is straightforward, though. Just find two parse trees.</p>
+        
+        <p>Our objective is to create a parser that takes in an unambiguous CFG and an input program, and outputs a parse tree. There are two ways of parsing. The first is <i>top-down parsing</i>, where you start at the start rule S and build to the input program. Pseudocode for top-down parsing:</p>
+        
+        <p><code>start with &alpha; = S<br>repeat<br>replace some nonterminal A in &alpha; with &beta;, where A &rarr; &beta; &isin; P<br>until &alpha; = x<br>end</code></p>
+        
+        <p>The second is <i>bottom-up parsing</i>, where you start at the input program and build to S. Pseudocode for bottom-up parsing:</p>
+        
+        <p><code>start with &alpha; = x<br>repeat<br>replace some &beta; in &alpha; with A, where A &rarr; &beta; &isin; P<br>until &alpha; = S<br>end</code></p>
+        
+        <h3>Augmented Grammars</h3>
+        
+        <p>To simplify parsing algorithms, it helps if the start symbol has just one rile. Any CFG can be augmented:</p>
+        
+        <p><code>G&prime; = {N &cup; {S'}, T &cup; {| |}, P &cup; {S' &rarr; | S |}}</code></p>
+        
+        <h3>Top-Down Parsing</h3>
+        
+        <p><code>S' &rarr; &alpha;<sub>1</sub> &rarr; &alpha;<sub>2</sub> &rarr; ... x</code></p>
+        
+        <p>Example grammar:</p>
+        
+        <p><code>S' &rarr; | S |<br>
+            S &rarr; A y B<br>
+            A &rarr; a b<br>
+            A &rarr; c d<br>
+            B &rarr; z<br>
+            B &rarr; w x</code></p>
+        
+        <p>Input: <code>| a b y w x |</code></p>
+        
+        <p><code>S' &rarr; | S |</code><br>Look at the current &alpha;<sub>1</sub>, one symbol at a time, left to right. While the symbols are terminals, match to the input.<br>When we hit the first non-terminal, choose a rule to apply.<br>Replace the LHS of the rule (nonterminal) with the RHS of the rule (terminal and nonterminal mix) to generate &alpha;<sub>i + 1</sub>.</p>
+        
+        <p>Our terminating condition is that there are no more nonterminals.</p>
+        
+        <p><code>S' &rarr; | S | &rarr; | A y B |</code></p>
+        
+        <p>Non-terminal A here next. Do not use brute force to find the rule for A. To help with the choice, look at the next (yet to be matched) input symbol. This is called a <i>lookahead</i>.</p>
+        
+        <p>In this case, the next input symbol is <code>a</code>. Predict which rule to apply to A knowing we want to produce the terminal a. This is written as <code>Predict(A, a)</code>. Details now, but this predicts which rule to apply based on a non-terminal and a lookahead terminal.</p>
+        
+        <p>In this case, this returns to us <code>A &rarr; a b</code>.</p>
+        
+        <p><code>S' &rarr; | S | &rarr; | A y B | &rarr; | a b y B |</code></p>
+        
+        <p>Non-terminal B here next. Lookahead to find that the next input symbol is <code>w</code> and use <code>Predict(B, w)</code> to return the rule <code>B &rarr; w x</code>.</p>
+        
+        <p><code>S' &rarr; | S | &rarr; | A y B | &rarr; | a b y B | &rarr; | a b y w x |</code></p>
+        
+        <p>At this point our string is entirely terminals. That means our parsing is done, and since we didn't run into any errors, we conclude that the input string is in the language.</p>
+        
+        <hr>
+        
+        <p>Once terminals have been matched, discard it. Only keep track of the leftmost non-terminal and the string of nonterminals that follows it. We can use a stack to keep track of <code>&alpha;<sub>i</sub></code>.</p>
+        
+        <table style="width:100%"><tr><th>Consumed Input</th><th>Remaining Input</th><th>Stack</th><th>Notes</th></tr>
+        <tr><td>&epsilon;</td><td>| a b y w x |</td><td>| S |</td><td>While the top of the stack<br>is not a terminal, match <br>with input</td></tr><tr><td>|</td><td>a b y x |</td><td>S |</td><td>Predict(S, a)<br>S&rarr;A y B<br>Pop S<br>Push B, y, A</td></tr><tr><td>|</td><td>a b y w x |</td><td>A y B |</td><td>Predict(A, a)<br>A&rarr;a b<br>Pop A<br>Push b, a</td></tr><tr><td>| a</td><td>b y w x |</td><td>b y B |</td><td>Pop a</td></tr><tr><td>| a b</td><td>y w x |</td><td>y B |</td><td>Pop b</td></tr><tr><td>| a b y</td><td>w x |</td><td>B |</td><td>Pop w</td></tr><tr><td>| a b y</td><td>w x |</td><td>w x |</td><td>Predict(B, w)<br>B&rarr;w, x<br>Pop B<br>Push x, w</td></tr><tr><td>| a b y w</td><td>x |</td><td>x |</td><td>Pop w</td></tr><tr><td>| a b y w x</td><td>|</td><td>|</td><td>Pop x</td></tr><tr><td>| a b y w x |</td><td>&epsilon;</td><td>&epsilon;</td><td>stack is empty, so we're<br>done</td></tr></table>
+        
+        <p>We accept when input and stack are empty.</p>
+        
+        <p>The <i>top-down parsing invariant</i> is that the consumed input (input successfully matched but are no longer keeping track of) + contents of the stack is a step of the derivation. In other terms,</p>
+        
+        <p><code>consumed input + stack contents = &alpha;<sub>i</sub></code>, or</p>
+        
+        <p><code>x + &Alpha;&Beta; = &alpha;<sub>i</sub></code></p>
+        
+        <p>How do you know your parse has failed? Two places:</p>
+        
+        <ol><li>When querying <code>Predict(A, a)</code>, you either get 0 rules (your parsing is stuck), or more than one rule (likely to be more than one path to a successful derivation - recall unique parse trees).</li>
+        <li>Top of the stack is a terminal which does not match the leftmost symbol from the remaining input.</li></ol>
+        
+        <h3>Computing the Predict Table</h3>
+        
+        <p><code>Predict(A, a)</code> is computing the rules that are applicable when the top of the stack is <code>A</code> and the lookahead is <code>a</code>. Should contain rules of the form <code>A &rarr; &Beta;</code> such that &Beta; derives something that begins with "a".</p>
+        
+        <p><code>Predict(A, a) = {A &rarr; &Beta; | a &isin; First(&Beta;)}</code></p>
+        
+        <p><code>First(&Beta;)</code> is the set of rules that start with some terminal a. We then say that a is in the first set of &Beta;.</p>
+        
+        <p><code>First(&Beta;) = {a | &Beta; &rarr;* a&gamma;}</code></p>
+        
+        <p>But this does not account for when &Beta; derives the empty string (nullable) i.e. &Beta; &rarr;* &epsilon;</p>
+        
+        <p><code>Nullable(&Beta;) = true if &Beta; &rarr;* &epsilon;, false otherwise</code></p>
+        
+        <p>Thus the full form of Predict becomes:</p>
+        
+        <p><code>Predict(A, a) = {A &rarr; &Beta; | a &isin; First(&Beta;)} &cup; {A &rarr; &Beta; | Nullable(&Beta;), a &isin; Follow(A)}</code></p>
+        
+        <p>Formally defined, <code>Follow(A)</code> is another set of terminals that when you start at the start symbol and  get a rule that contains A as the first nonterminal followed by some terminal a. We then say that a is in the follow set of A.</p>
+        
+        <p><code>Follow(A) = {a | S' &rarr;* &alpha;Aa&Beta;}</code></p>
+        
+        <H3>Computing Nullable</H3>
+        
+        <p>Nullable is typically the simplest to compute. It is a fixed-point algorithm. Fixed point algorithms are ones that update iteratively and only stop when two iterations result in an identical state.</p>
+        
+        <p><code>intialize Nullable[A] = false &forall; A &isin; N<br>
+            repeat<br>
+            for each rule &Beta; &rarr; &Beta;<sub>1</sub>...&Beta;<sub>k</sub><br>
+            if k = 0 or Nullable[&Beta;<sub>1</sub>] =...=Nullable[&Beta;<sub>k</sub>] = true<br>
+            Nullable[&Beta;] = true<br>endif<br>until nothing changes</code></p>
+        
+        <h3>Computing First(A)</h3>
+        
+        <p>Repeatedly do some computation until we get to a fixed point.</p>
+        
+        <p><code>initialize First[A] = &empty; &forall; A &isin; N<br>repeat<br>for each rule A &rarr; &Beta;<sub>1</sub> ... &Beta;<sub>k</sub><br>for i = 1 to k<br>if &Beta;<sub>1</sub> is a terminal, 'a'<br>First[A] &cup;= {a};<br>break;<br>else ;; B<sub>i</sub> not a terminal<br>endif<br>First[A] &cup;= First[B<sub>i</sub>]<br>if not Nullable[B<sub>i</sub>] break; ;; otherwise we need to look further in the rule<br>endif<br>endfor<br>until nothing changes</code></p>
+        
+        <hr>
+        
+        <p>Recall: <br><code>Predict(A, a) = {A &rarr; &Beta; | a &isin; First(&Beta;)} &cup; {A &rarr; &Beta; | Nullable(&Beta;). a &isin; Follow(A)}</code></p>
+        
+        <p>First set computes the set of terminals that can be derived starting at a particular symbol. If it is a string of nonterminals, than the question is still the same.<br><br><code>First*(Y<sub>1</sub> ... Y<sub>n</sub>)<br><Br></code> Here is an algorithm:</p>
+        
+        <p><code>result = {}<br>for i in 1 to n <br>if Y<sub>i</sub> &isin; (non-terminal)<br>result &cup;= First(Y<sub>i</sub>)<br>if not nullable[Y<sub>i</sub>] break;<br>else ;; Y<sub>i</sub> is a terminal<br>result &cup;= {Y<sub>i</sub>}<br>break;<br>endfor<br>return result</code></p>
+        
+        
+        <h3>Computing Follow</h3>
+        
+        <p><code>Follow(A) = {a | S' &rarr;* &alpha;Aa&beta;}</code></p>
+        
+        <p><code>initialize Follow[A] = {}, &forall; A &isin; N \ {S'}<br>repeat<br>-for each rule A &rarr; B<sub>1</sub> ... B<sub>n</sub><br>--for i in 1 to n<br>---if B<sub>i</sub> &isin; N<br>----follow[B<sub>i</sub> &cup;= First*(B<sub>i+1</sub>...B<sub>n</sub>)<br>----if all of B<sub>i+i</sub>...B<sub>n</sub> are nullable (including i = n')<br>-----follow[B<sub>i</sub>] &cup;= Follow[A]<br>----endif<br>---endif<br>--endfor<br>-endfor<br>repeat until nothing changes</code></p>
+        
+        <P>In the following language...</P>
+        
+        <p><code>S' &rarr; | S |<br>S &rarr; b S d<br>S &rarr; p S q<br>S &rarr; C<br>C &rarr; l C<br>C &rarr; &epsilon;</code></p>
+        
+        <table style='width:100%'><tr><th>Iteration</th><th>0</th><th>1</th><th>2</th></tr><tr><td>S</td><td>{}</td><td>{|, d, q}</td><td>{|, d, q}</td></tr><tr><td>C</td><td>{}</td><td>{|, d, q}</td><td>{|, d, q}</td></tr></table>
+        
+        <p>(For the midterm, understand what's going on over memorizing the algorithms).</p>
+        
+        <P><code>Predict[S][b] = ??</code></P>
+        <p>S (A) &rarr; b S d (&beta;)</p>
+        
+        <p>Is <code>b &isin; First(&Beta;)</code>?<br>In other words, is <code>b &isin; First(b S d)</code>? ({b}) (yes)</p>
+        
+        <p>S (A) &rarr; p S q (&beta;)</p>
+        
+        <p>Is <code>b &isin; First(p S q)</code>? ({p}) (no)</p>
+        
+        <p>Is <code>Nullable(p S q)</code>? No, since there are terminals in the rule. This will never be true, so we can discard this rule entirely.</p>
+        
+        <p>Is <code>b &isin; First(C)</code>? ({l}) (no)</p>
+        
+        <p>Is <code>Nullable(p S q)</code>? Yes. So we must check follow set.</p>
+        
+        <p>Is <code>b &isin; Follow(S)?</code> No, so this is not in the rule.</p>
+        
+        <hr>
+        
+        <p><center>Example Predict Table</center></p>
+        
+        <table style="width:100%"><tr><th>.</th><th>|-</th><th>-|</th><th>b</th><th>d</th><th>p</th><th>q</th><th>l</th></tr><tr><th>S'</th><td>1</td><td>.</td><td>.</td><td>.</td><td>.</td><td>.</td><td>.</td></tr><tr><th>S</th><td>.</td><td>4</td><td>2</td><td>4</td><td>3</td><td>4</td><td>4</td></tr><tr><th>C</th><td>.</td><td>6</td><td>.</td><td>6</td><td>.</td><td>6</td><td>5</td></tr></table>
+        
+        <hr>
+        
+        <h3>LL(1) Parser, LL(1) Languages</h3>
+        
+        <p>This means:</p>
+        
+        <ul><li>L = left to right scan</li><li>L = leftmost derivation</li><li>1 = looking ahead at most 1 symbol</li></ul>
+        
+        <p>In the general case you can write an LL(k) parser, which contains k lookaheads.</p>
+        
+        <p>A grammar is LL(1) if no combination of non-terminal and terminal contains more than 1 rule in the Predict table.</p>
+        
+        <p><Code>expr &rarr; id<br>expr &rarr; expr op expr<br>op &rarr; + | x | * | /</Code></p>
+        
+        <p>Recall that this grammar was ambiguous, since for a chosen derivation style, there was an input string where more than one derivation was possible. Let's try to compute its predict table. For <code>Predict[expr][id]</code></p>
+        
+        <p>expr &rarr; id<br>id &isin; First[id]? Yes</p>
+        
+        <p>expr &rarr; expr op expr<br>id &isin; First[expr op expr]? Yes, since expr derives to id.</p>
+        
+        <p>With a 1 character lookahead, you cannot decide what rule to apply. So this language is not LL(1).</p>
+        
+        <p>A nullable symbol should not have the same terminal in its first and follow set.<br>There should also be only one way to derive &epsilon; for a nullable symbol.<br>A non-terminal should not generate a terminal through 2 different productions/rules.</p>
+        
+        <p>In fact, left-recursive (where the right hand side of a rule contains recursion on its left side, as in the rule <code>E &rarr; E + T</code>) are NEVER LL(1). Thus, all languages should be right-recursive (as in the rule <code>E &rarr; T + E</code>) in order to be LL(1). But this is still not guaranteed. Languages must factor out longest <i>common prefixes</i> in order to be LL(1).</p>
+        
+        <p>An example:</p>
+        
+        <p><code>E &rarr; E + T | T<br>T &rarr; T * F | F<br>F &rarr; a | b | c</code></p>
+        
+        <p>This is not LL(1), even though it is right recursive. Factoring out, this gets:</p>
+        
+        <p><code>E &rarr; T T'<br>E' &rarr; + E | &epsilon;<br>T &rarr; F T'<br>T' &rarr; * T | &epsilon;<br>F &rarr; a | b | c</code></p>
+        
+        <h3>Bottom-Up Parsing</h3>
+        
+        <p>missed a table oops</p>
+        
+        <p>Reduce steps (where we apply a rule) and shift steps (where we move something from remaining into consumed steps) both used. Goal is to always reduce before shifting - RIBS/.</p>
+        
+        <p>The parse is accepted if the remaining input is &epsilon; and the stack contains just S'.</p>
+        
+        <p>Derivation: Rules used in the reduce steps in reverse.<br><code>S' &rarr; | S | &rarr; | A y B | &rarr; | A y w x | &rarr; | a b y w x |</code></p>
+        
+        <p>Bottom up parsing gives <i>rightmost derivation</i>. The invariant is as follows:<br><code>stack + remaining input = &alpha;<sub>i</sub></code></p>
+        
+        <p>The key challenge in bottom-up parsing is deciding if the stack contents can be reduced. We fomralize when the RHS of arule is on the stack.</p>
+        
+        <p>Here is a simpler grammar.</p>
+        
+        <p><code>S' &rarr; | E |<br>E &rarr; E + T<br>E &rarr; T<br>T &rarr; id</code></p>
+        
+        <p>When do we reduce using E &rarr; E + T? When E + T is on the top of the stack. We need a notation for tracking how much of a RHS is on the stack.</p>
+        
+        <p>We formalize a definition of an <i>item.</i> It is a production/rule with a bookmark somewhere on the RHS of the rule. We will use adot o simulate the bookmark. &bull;</p>
+        
+        <p>E &rarr; &bull;E + T<br>"Fresh rule" - none of the RHS is on the stack.</p>
+        
+        <p><code>push E</code></p>
+        
+        <p>E &rarr; E&bull; + T<br>E is on top of stack</p>
+        
+        <p><code>push +</code></p>
+        
+        <p>E &rarr; E +&bull; T<br>E and + are on top of stack</p>
+        
+        <p><code>push T</code></p>
+        
+        <p>E &rarr; E + T&bull;<br>"Reducible state" - the entire RHS is on the stack</p>
+        
+        <p>Note that we can use a DFA to track the progress of a rule's RHS on the stack.</p>
+        
+        <p>Idea 1: create a single DFA for all the rules of the grammar. Run the stack content through the DFA, and take the action depending on which state you land in. If we end up on a state that has a reducible item, reduce using the rule. Otherwise, shift.</p>
+        
+        <p>Not efficient. At each step, we run the entire stack content through the DLF. Observation is that shift/reduce only changes the topmost few symbols on the stack. Let's also keep track of what state the current stack contents lead to by maintainng a separate stack of states.</p>
+        
+        <p>The <i>state stack</i> holds what state is being traversed. When shifting, push the state you are traversing into on the state stack. If a state is not reducible, shift and push the next item onto the <i>symbol stack</i>. Once a state is reducible, pop the reducible items that correspond to the RHS of the rule and push the LHS on the symbol stack, then pop the state from the state stack and look at what the new top of the state stack is. Look for a transition from that state using the symbol you just pushed, and push that state back into the state stack. Whenever you pop from one stack, you also want to pop from the other as well to keep them in sync.</p>
+        
+        <p>Special case: when you reduce using the rule for the start symbol <code>S'</code>, you stop, because you're done.</p>
+        
+        <h3>LR Parsing</h3>
+        
+        <p><i>LR-parsing</i> is a left to right scan (L) using rightmost derivations (R). The kind we focus on is LR(0) parsing - no lookahead.</p>
+        
+        <p>Donald Knuth: The set <code>{ wa | &exist; x, S &rarr;* wax }</code>, where w = the contents of the stack and a = the lookahead, is a regular language.</p>
+        
+        <p>Possible errors:</p>
+        
+        <p><b>Shift reduce conflict</b><br><code>A &rarr; &alpha; &bull; c &beta; ;; shift<br>B &rarr; &gamma; &bull; ;;reduce</code><br>We don't know whether to shift or reduce.</p>
+        
+        <p><b>Reduce reduce conflict</b><br><code>A &rarr; &gamma; &bull; ;;reduce<br>B &rarr; &alpha; &bull; ;;reduce</code><br>Not sure which rule to reduce by.</p>
+        
+        <p>Remember: we don't like to have to choose between two rules. Ideally we would only ever have to follow one rule at a time!</p>
+        
+        <p>LR(0) parsing can parse a wider array of languages than LL(1) can. Thus, we say that it is more powerful.</p>
+        
+        <p>For the following language:<br><code>S' &rarr; | E |<br>E &rarr; T + E<br>E &rarr; T<br>T &rarr; id</code></p>
+        
+        <p>We get the following pseudocode:</p>
+        
+        <p><code>input | id ....<br>shift |<br>shift id<br>reduce t &rarr; id<br>now at shift-reduce state<br>if input = | id |<br>-lookahead | &Rarr; reduce E &rarr; T<br>if input = | id +<br>-then shift</code></p>
+        
+        <p> This is describing an LR(1) parse, or looking ahead 1 symbol. As you can see, it will work. However this is rarely used in practice as it results in giant DFAs.</p>
+        
+        <p>Add more information for reducible items in a state. For each reducible item A &rarr; &gamma; &bull;, add the follow(A) (recall follow(A) = <code>{ b | S' &rarr; &alpha; A b &gamma; }</code>). Tag this information for each reducible item and reduce using this rule (to reduce means to take the RHS off the stack and replace it with the LHS. In this case we will end up with A on the top of the stack). Then we will look to see if the lookahead is a terminal in the follow set. If it is, then reduce, otherwise shift.</p>
+        
+        <p>New reduction policy: only reduce using a reducible item if the next input symbol is in the follow set of the non-terminal for the reducible.</p>
+        
+        <p>This is called <i>SLR(1) parsing</i> (simplified LR(1)). Take a LR(0) DFA and tag each reducible item with its follow set.</p>
+        
+        <p>For the following rule:</p>
+        
+        <p><code>A &rarr; &beta; &bull; ;; a, b<br>B &rarr; &gamma; &bull; ;; b, c</code></p>
+        
+        <p>If lookahead is <code>a</code>, reduce using <code>A &rarr; &beta;</code></p>
+        
+        <p>If lookahead is <code>c</code>, reduce using <code>B &rarr; &gamma;</code></p>
+        
+        <p>But if lookahead if <code>b</code> we have a reduce-reduce conflict.</p>
+        
+        <p>It is more common to use SLR(1) parsing than LR(1) parsing, since the latter produces larger DFAs. These reducible items are tagged with hermals that must appear as a lookahead.</p>
+        
+        <p><I>LALR(1) parsing</I> is lookahead LR(1) parsing</p>
+        
+        <p>(weakest) LR(0) &rarr; SLR(1) &rarr; LALR(1) &rarr; LR(1) &rarr; LR(k) (strongest)</p>
+        
+        <p>Pseudocode:</p>
+        
+        <P><code>input DFA(&Sigma;, Q, q<sub>0</sub>, Trans, A)<br><br>symStack.push |-;<br>stateStack.push Trans[q, |-];<br>for each symbol a in input, -|<br>-while Reduce[stateStack.top, a] is same rule A &rarr; &gamma;<br>--symStack.pop symbols in &gamma;;<br>--stateStack.pop |&gamma;| states;<br>--sysStack.push A;<br>--stateStack.push Trans[stateStack.top, A];<br>-endwhile<br>-symStack.push a<br>-reject if Trans[stateStack.top, a] is undefined (ERROR state)<br>-stateStack.push Trans[stateStack.top, a]<br>endfor<br>accept if (symStack is = |- S -|)</code></P>
+        
+        <hr>
+        
+        <h3>Parse Trees</h3>
+        
+        <p>None of these algorithms say how to create aparse tree as afinal input. The observation to make is pushing and popping symbols on the symbol stack. What if we pushed trees and subtrees instead?</p>
+        
+        <p>Pseudocode for tree class.</p>
+        
+        <p><code>class Tree{<br>-string rule; // expr expr plus term<br>-vector&lt;string&gt; tokens; // 'expr', 'expr', PLUS, 'rule'<br>-vector&lt;Tree *&gt; children;<br>};</code></p>
+        
+        <p><code>void doSomething(Tree *t) {<br>-for(vector &lt;Tree *&gt;::iterator it = t.children.begin(), it != t.children.end(), ++it) {<br>--doSomething(* it);<br>-}<br>-// do some other thing<br>}</code></p>
+        
+        <p><code>void something(const Tree &amp;T) {<br>-// something<br>-for (const auto &amp;i : t.children) {<br>--something(i);<br>-}<br>}</code></p>
+        
+        <p>Once input has been scanned and parsed, what else is there to do? (Use of undeclared variable/procedure, duplicate variables/procedures, type checking)</p>
+        
+        <h3>Context-Sensitive Analysis</h3>
+        
+        <p>There are formal ways to specify these. eg. Linear bounded automata. But this is too theoretical for this course. We will use a more informal approach, which is tree traversals.</p>
+        
+        <ul>
+        <li>duplicate variables/procedures</li>
+        <li>missing definitions of variables/procedures</li>
+        <li>types?</li></ul>
+        
+        <p><i>Missing variable definitions</i>: how do we catch that?</p>
+        
+        <p>Keep track of all variables that have been declared. Create a symbol table, just like we did in MIPS for label definitions. We should traverse the tree and find all variable declarations:</p>
+        
+        <p><code>dcl &rarr; Type ID</code></p>
+        
+        <p>The lexeme then becomes the name of the variable. We will need to retrieve the type from the parse tree as well. Store the variable name and type in the symbol table (both stored as strings).</p>
+        
+        <p>Our symbol table can simply be a <code>map&lt;string, string&gt;</code> where the key is the variable name and the value is the type the variable is meant to store.</p>
+        
+        <p>Before inserting into the symbol table, check that an entry for the same variable name doesn't already exist. If an entry already exists, you have found a duplicate. This should throw an error.</p>
+        
+        <p>We could traverse the tree again, once the symbol table has been created (look for uses of variables).</p>
+        
+        <p><code>factor &rarr; id<br>lvalue &rarr; id</code></p>
+        
+        <p>Since all declarations in WLP4 must appear before any other statements, it is possible to do all of this in one pass.</p>
+        
+        <p>WLP4 code:<br><code>int f() {<br>-int x = 0;<br>-return 1;<br>}<br><br>int wain(int a, int b) {<br>-int x = 0;<br>-return 1;<br>}</code></p>
+        
+        <p>This is legal, but what we talked about earlier does not accept this. We would need subtrees for different methods - separate symbol tables for each function, since they have their own scope.</p>
+        
+        <p>When checking for the use of undeclared variables, we also need to make sure that we check the correct symbol table.</p>
+        
+        <p>Procedures</p>
+        <ul>
+        <li>multiple definitions</li>
+        <li>procedure calls to undeclared procedures</li></ul>
+        
+        <p>Create a map that maps procedure names to its variable symbol table. <code>map &lt;string, map &lt;string, string &gt;&gt;</code> is the top level symbol table. The key is the name of the procedure and the value is the symbol table defining the procedure.</p>
+        
+        <p>To fill the top level symbol table, traverse the tree looking for procedures.</p>
+        
+        <p><code>procedure &rarr; INT ID LPAREN...<br>main &rarr; INT WAIN LPAREN....</code></p>
+        
+        <p>Check that the top level symbol table doesn't already have an entry for this procedure that we just encountered in our traversal. If there is one, it's an error. If not, need to make an entry in the top level symbol table.</p>
+        
+        
+        <p>Let's store the types of the parameters of each procedure.</p>
+        
+        <P><code>paramlist &rarr; dcl<br>paramlist &rarr; dcl COMMA paramlist<br>paramlist &rarr; &epsilon;</code></P>
+        
+        <p>The signature is simply a list of all parameter types. <code>vector &lt;string&gt;</code></p>
+        
+        <p>Option 1: create a map from procedure name to vector of parameter types.<br><code>map &lt;string, vector &lt;string*&gt;&gt;</code></p>
+        
+        <p>Option 2: use the top level symbol table.<br><code>map &lt;string, pair &lt;vector &lt;string&gt;, map &lt;string, string&gt;&gt;&gt;</code></p>
+        
+        <p><i>Checking type errors</i>: Types allow us to assign an interpretation to the contents of some meory address. A good type system prevents errors caused by interpreting certain types of data in an unintended way.</p>
+        
+        <P>WLP4 supports two types: <code>int</code> and <code>int *</code>.</P>
+        
+        <h3>Type Correctness</h3>
+        
+        <p>Determine the types associated with variables and expressions. Then, ensure operators are applied to operands of the correct type.</p>
+        
+        <p>We already have types for variables.</p>
+        
+        <p>Determine type of every expression by applying type rules. IF no rule is applicable, or if an expression's type does not match the context in which it is, used, then there is a type error.</p>
+        
+        <p><code>string typeof (Tree &amp;t) {<br>-for each child c in t.children {<br>--typeof(c); // recursively detremine types for subtrees<br>-- // use t.rule to detremine what type rule is applicable. Use the computed types of the children to determine if the type rule is satisfied.</code></p>
+        
+        <p>Some axiomatic tokens and their respective types:</p>
+        
+        <p><code>________<br>NUM: int<br>________<br>NULL: int *</code></p>
+        
+        <hr>
+        
+        <p>Singleton rules:<br><br><code>expr &rarr; term<br>term &rarr; factor<br>factor &rarr; id</code></p>
+        
+        <p>If we can say that the type of <code>id</code> is &Tau;, same for <code>factor, term, expr</code>. Bubble up the type.</p>
+        
+        <p>The type of the LHS is the type of the RHS (or, the type of the parent is the type of the child).</p>
+        
+        <p><code>E : &Tau;<br>__________<br>( E ) : &Tau;</code></p>
+        
+        <hr>
+        
+        <p>Address-of Operator<br><code>E: int<br>______<br>&amp;E: int*</code></p>
+        
+        <p>Note that for WLP4, E <i>must</i> be an int. This is not true for C or C++.</p>
+        
+        <p>Furthermore, in this example, E must be an <code>lvalue</code>. Thus, <code>&amp;3</code> is not legal. This is enforced by WLP4 CFG.</p>
+        
+        <hr>
+        
+        <p>Dereferencing:<br><code>E: int*<br>______<br>*E: int</code></p>
+        
+        <p>Want to make sure that E has type <code>int*</code>, otherwise dereferencing is not valid.</p>
+        
+        <hr>
+        
+        <p>Allocation:<br><code>E: int<br>______<br>new int[E]: int*</code></p>
+        
+        <hr>
+        
+        <p>Operations:<br><code>E<sub>1</sub>: int, E<sub>2</sub>: int<br>________<br>E<sub>1</sub> * E<sub>2</sub>: int</code></p>
+        
+        <hr>
+        
+        <p>Addition:<br><code>E<sub>1</sub>: int, E<sub>2</sub>: int<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int</code></p>
+        
+        <hr>
+        
+        <P><code>E<sub>1</sub>: int*, E<sub>2</sub>: int<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int*</code><br>(array + 3)</P>
+        
+        <hr>
+        
+        <p><code>E<sub>1</sub>: int, E<sub>2</sub>: int*<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int*</code><br>(3 + array)</p>
+        
+        <hr>
+        
+        <p>Divsion and modulo is the same.</p>
+        
+        <hr>
+        
+        <p>Subtraction:<br><code>E<sub>1</sub>: int, E<sub>2</sub>: int<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int</code></p>
+        
+        <hr>
+        
+        <p><code>E<sub>1</sub>: int*, E<sub>2</sub>: int<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int*</code></p>
+        
+        <hr>
+        
+        <p><code>E<sub>1</sub>: int*, E<sub>2</sub>: int*<br>________<br>E<sub>1</sub> + E<sub>2</sub>: int</code></p>
+        
+        <hr>
+        
+        <p>Procedure calls:<br><code>f(T<sub>1</sub>,...,T<sub>n</sub>) &isin; top level sym table, typeof(E<sub>i</sub>) = T<sub>i</sub> &forall;i<br>__________________<br>f(E<sub>1</sub>,...,E<sub>n</sub>): int</code></p>
+        
+        <hr>
+        
+        <h3>Type Checking Statements</h3>
+        
+        <p>Expressions produce values and have a type. Statements must be "well-typed". An expression E is well-typed if E has some type that follows the type system - a type can be inferred for the expression.</p>
+        
+        <p><code>E: T<br>________<br>well-typed(E)</code></p>
+        
+        <hr>
+        
+        <p>Comparisons, e.g. E<sub>1</sub> == E<sub>2</sub>. Comparisons can only appear where comparisons(tests) are expected, in <code>if</code> and <code>while</code> statements. Booleans are otherwise not supported. Comparisons are well-typed, if the subexpressions have the same type.</p>
+        
+        <p><code>E<sub>1</sub>: T, E<sub>2</sub>: T<br>_________<br>well-typed(E<sub>1</sub> == E<sub>2</sub>)</code></p>
+        
+        <hr>
+        
+        <p>Assignment:<br><code>E<sub>1</sub>: T, E<sub>2</sub>: T<br>_________<br>well-typed(E<sub>1</sub> = E<sub>2</sub>)</code></p>
+        
+        <p>In an assignment structure, the RHS can be any well-typed expression. The LHS, though, must also be an lvalue. Lvalues represent a location in memory.</p>
+        
+        <p>Variables are lvalues. However, there are other types of expressions that can be lvalues.</p>
+        
+        <p><Code>int *a = NULL;<br>a = new int[10];<br></Code></p>
+        
+        <p>In the following snippet, <code>a</code> is a variable, and all variables are lvalues. It represents a location in memory.</p>
+        
+        <p><code>*a = 10;</code></p>
+        
+        <p>This is also legal. <code>*a</code> is dereferencing a pointer, which gives you the location in memory. The WLP4 CFG enforces that the LHS is an lvalue.</p>
+        
+        <hr>
+        
+        <p>Print statement:<br><code>E: int<br>________<br>well-typed(println E)</code></p>
+        
+        <hr>
+        
+        <p>Deallocation:<br><code>E: int*<br>________<br>well-typed(delete[] E)</code></p>
+        
+        <hr>
+        
+        <p>If/else:<br><code>well-typed(T), well-typed(S<sub>1</sub>), well-typed(S<sub>2</sub>)<br>____________________________<br>well-typed(if (T) {S<sub>1</sub>} else {S<sub>2</sub>})</code></p>
+        
+        <hr>
+        
+        <h3>Statement Sequence</h3>
+        
+        <p>A sequence of 0 statements is well-typed.</p>
+        
+        <p><code>well-typed(S<Sub>1</Sub>), well-typed(S<sub>2</sub>)<br>___________________<br>well-typed(S<sub>1</sub>S<sub>2</sub>)</code></p>
+        
+        <p><code>well-typed(T), well-typed(S<sub>1</sub>)<br>___________________<br>well-typed(while (T) {S<sub>1</sub>})</code></p>
+        
+        <hr>
+        
+        <p><code>(id, int) &isin; symtbl<br>______________<br>well-typed(decls type id = NUM)</code></p>
+        
+        <hr>
+        
+        <p><code>well-typed(decls), well-typed(S), E: int<br>_______________<br>well-typed(int id (params) { dcls S return E })</code></p>
+        
+        <p>Note that for <code>wain</code> (special main function), the second parameter must be an int.</p>
+        
+        <hr>
+        
+        <h3>Code Generation</h3>
+        
+        <p>Optimize and correct.</p>
+        
+        <p>Optimize:</p>
+        
+        <ul>
+        <li>Ease of implementation</li>
+        <li>Efficiency (running time of compiled program)</li>
+        <li>Size of the produced output</li></ul>
+        
+        <p>We are mostly going to focus on correctness in this course.</p>
+        
+        <p>Will need to keep track of where the value of each variable is stored.</p>
+        
+        <p>Storing values of variables: First option is to reserve a register for each variable in the program. Keep track of this within the compiler. Can store it as part of the sign table.</p>
+        
+        <p>Does not work in the general case, since WLP4 has unlimited amount of variables and MIPS only has 32 registers. Ideally we would use as many registers as we could and have a backup strategy (just use the stack). Simplification: just use to stack for all variables.</p>
+        
+        <p><code>int wain(int a, int b) { return a; }<br><br>lis $4<br>.word 4<br>sw $1, -4($30)<br>sub $30, $30, $4<br>sw $2, -4($30)<br>sub $30, $30, $4<br>lw $3, 4($30)<br>add $30, $30, $4<br>add $30, $30, $4<br>jr $31</code></p>
+        
+        <table style="width:100%"><tr><th>var</th><th>type</th><th>offset wrt $30</th></tr><tr><td>a</td><td>int</td><td>4</td></tr><tr><td>b</td><td>int</td><td>0</td></tr></table>
+        
+        <p>There is a problem with this approach. Offsets depend on the number of variables in the procedure - not a problem as all variables are declared at the start of a procedure.</p>
+        
+        <p>Another problem: we are likely to use the stack for storing other data (temporary values). This will update $30. Compiler will need to update the offsets.</p>
+        
+        <hr>
+        
+        <p>Instead of using registers to store temporary values, use the stack.</p>
+        
+        <p><code>code(a) ; $3 &larr; a<br>push($3) ; helper function here?<br>code(b) ; $3 &larr; b (overwritten, but it's fine since it's on the stack)<br>push($3)<br>code(c) ; $3 &larr; c<br>pop($8) ; $8 &larr; b<br>sub $3, $8, $3 ; b - c<br>pop($8) ; $8 &larr; a<br>sub $3, $8, $3<br></code></p>
+        
+        <h3>Coding Templates</h3>
+        
+        <p><code>code(factor &rarr; id)</code> (what is the code to generate)</p>
+        
+        <p><code>= lw $3, offset (look this up in the sym table)($29)</code></p>
+        
+        <p><code>code(expr1 &rarr; expr3 + term)<br>= code(expr2) + push($3) + code(term) + pop($8) + "add $3, $8, $3"</code></p>
+        
+        <h3>Println Statement</h3>
+        
+        <p>Semantics: prints the int value in decimal followed by a newline.(We wrote a print procedure in A2P6/A2P7a)</p>
+        
+        <p>Runtime environment: functions/procedures/classes made available by the compiler/OS for use. Our code generator will assume that a print procedure is available at runtime. Generate code to call this procedure - since the 'print' label will be defined externally, we need to tell the assembler that we intend to use this external label. Use the .import assembler directive/.import print.</p>
+        
+        <p>Provided file: print.merl (Object file)</p>
+        
+        <p>Need to link out.asm and print.merl.</p>
+        
+        <p>Need to use <code>cs241.linkasm</code> for this.</p>
+        
+        <p><code>cs241.linkasm&lt; out.asm &gt;out.merl</code><br>Object file makes note of any imports or exports</p>
+        
+        <p><code>cs241.linker out.merl print.merl &gt; out.mips</code></p>
+        
+        <p><code>mips{twoints, array} out.mips</code></p>
+        
+        <p>Print expects the value in $1. Calling a procedure (using jalr) will overwrite $31, and we need to preserve this. Store/restore registers we care about.</p>
+        
+        <p><code>code(println expr)<br>= code(expr) + "add $1, $3, $0" + push($31) + storeRegs() + "lis $10" + ".word print" + "jalr $10" + restoreRegs() + pop($31)</code></p>
+        
+        <p>Note that "import print" is going to be once at the beginning of the codegen.</p>
+        
+        <h3>Assignment Statement</h3>
+        
+        <p>For now, assume expr1 is an ID.</p>
+        
+        <p><code>code(stmt &rarr; expr1 BECOMES expr2 SEMI) = code(expr2) + "sw $3, offset($29)" ; lookup this offset, for id of expr1.</code></p>
+        
+        <p><code>code(test &rarr; expr1 &lt; expr2) = code(expr1) + "add $5, $3, $0 + code(expr2) + "slt $3, $5, $3"</code></p>
+        
+        <p>Convention: $3 is 1 if condition is true, otherwise $3 is 0 if the condition is false.</p>
+        
+        <p><code>code(test &rarr; expr1 &gt; expr2) = code(expr2) + "add $5, $3, $0 + code(expr1) + "slt $3, $5, $3"</code></p>
+        
+        <p><Code>code(test &rarr; expr1 &ne; expr2) = code(EXPR1) + "add $5, $3, $0" + code(expr2) + "slt $6, $5, $3" + "slt $7, $3, $5" + "add $3, $6, $7" ; check to see if $3 is nonzero</Code></p>
+        
+        <p><Code>code(test &rarr; expr1 = expr2) = code(EXPR1) + "add $5, $3, $0" + code(expr2) + "slt $6, $5, $3" + "slt $7, $3, $5" + "add $3, $6, $7" + "lis $11" + ".word 1" + "sub $3, $11, $3<br>; implemented as not(test &rarr; expr1 &ne; expr2</Code></p>
+        
+        <p>To make things easier, use conventions.</p>
+        
+        <ul>
+        <li>$4 always has 4</li>
+        <li>$11 always has 1</li>
+        <li>$10 has address for print</li></ul>
+        
+        <p><code>code(stmt &rarr; IF test stmt1 ELSE stmt2) =code(test) + "beq $3, $0, else" + code(stmt1) + "beq $0, $0, endif" + "else:" + code(stmt2) + "endif:"</code></p>
+        
+        <p>While statement is almost identical.</p>
+        
+        <p><Code>code(stmt &rarr; while test stmts)<br> ="start:" + code(Test) + "beq $3, $0, endloop" + code(stmts) + "beq $0, $0, start" + "endloop:"</Code></p>
+        
+        <h3>Pointers</h3>
+        
+        <p>Allocate an array using the new command. Take the address of a variable (in both cases you are dealing with an <code>int*</code>, a pointer to an address in memory).</p>
+        
+        <p><Code>int wain(int a, int b){<br>-int *x = NULL;<br>-int y = 7;<br>-x = &amp;y;<br>-return *x;<br>}</Code></p>
+        
+        <p>We need to support the following.</p>
+        
+        <ul>
+        <li>NULL</li>
+        <li>dereference</li>
+        <li>address-of</li>
+        <li>comparisons</li>
+        <li>pointer arithmetic</li>
+        <li>allocation</li>
+        <li>deallocation</li></ul>
+        
+        <p><code>code(factor &rarr; NULL)<br>= "add $3, $0, $0"</code></p>
+        
+        <p>We could make NULL have the value 0. We would like dereferencing NULL to crash our program, so choose an address not divisible by 4.</p>
+        
+        <p><Code>code(factor &rarr; NULL)<br>= "add $3, $11, $0"</Code></p>
+        
+        <p><code>code(factor &rarr; *expr) ;; guaranteed to have type int*<br>= code(expr) + "lw $3, 0($3)"</code></p>
+        
+        <h3>Pointer Comparisons</h3>
+        
+        <p><code>code(test &rarr; expr1 &lt; expr2)<br>= code(expr1) + "add $5, $3, $0" + code(Expr2) + "slt(if int), sltu(if int*) $3, $5, $3"</code></p>
+        
+        <h3>Pointer Arithmetic</h3>
+        
+        <p><code>code(expr1 &rarr; expr2(int*) + term(int))<br>= code(Expr2) + push($3) + code(term) + "mult $3, $4" + "mflo $3" + pop($8)</code></p>
+        
+        <p><code>code(expr1 &rarr; expr2(can be int or int*) - term (if expr2 is int, this must be int. if it's int* it can be either))<br>= code(expr2) + push($3) + code(term) + pop($8) + "sub $3, $8, $3" + "div $3, $4" + "mflo $3"</code></p>
+        
+        <p><code>code(stmt &rarr; lvalue becomes expr semi)</code></p>
+        
+        <p>An lvalue has three rules.</p>
+        
+        <ol>
+        <li>lvalue &rarr; id (eg. a = 5)</li>
+        <li>lvalue &rarr; ( lvalue ) (recurse on the inner lvalue)</li>
+        <li>lvalue &rarr; STAR factor (eg. *a = 5)</li></ol>
+        
+        <p><code>code(stmt &rarr; STAR factor becomes expr)<br>= code(expr) + push($3) + code(factor) + pop($8) + sw $8, 0($3)</code></p>
+        
+        <p><code>code(factor &rarr; &amp; lvalue</code></p>
+        
+        <p>Again, an lvalue has three rules.</p>
+        
+        <ol>
+        <li>lvalue &rarr; id (eg. a = 5)</li>
+            <li>lvalue &rarr; ( lvalue ) (recurse on the inner lvalue)</li>
+            <li>lvalue &rarr; ID (eg. &amp;a)</li></ol>
+        
+        <p><code>code(Factor &rarr; &amp; ID)<br>="lis $3" + ".word offset (sym table)" + "add $3, $29, $3"</code></p>
+        
+        <p><code>code(factor1 &rarr; &amp;*factor2)<br>=code(factor2)</code></p>
+        
+        <h3>New/Delete</h3>
+        
+        <p>We need a way to represent the heap (the good news is, we provide alloc.merl, much like print.merl, which exports init / new / delete procedures). Just assume them as part of your runtime. This implies that your main prologue should import thes procedures (much like with print).</p>
+        
+        <p>How to use this?</p>
+        
+        <p><code>./wlp4gen &lt; in.wlp4i &gt; out.asm</code></p>
+        
+        <p>Must use cs241.linkasm</p>
+        
+        <p><code>cs241.linkasm &lt; out.asm &gt; out.merl<br>cs241.linker out.merl print.merl alloc.merl &gt; final.merl<br>cs241.merl 0 &lt; final.merl &gt; final.mips</code></p>
+        
+        <hr>
+        
+        <p>get last lectures notes</p>
+        
+        <hr>
+        
+        <h3>Code Gen, Cont'd - Compiler Optimizations</h3>
+        
+        <p>Last time:</p>
+        
+        <p>Parameters to procedure:<br><code>int g(int a, int b, int c){<br>-int d = ...<br>-int e = ...<br>-int f = ....</code></p>
+        
+        <p>Procedure call: <code>G(..., ..., ...)</code></p>
+        
+        <p>What if WLP4 code contained a procedure called <code>init</code>? Then the label generated would be init, and it would clash with the init that we are trying to link in.</p>
+        
+        <p>We need to come up with a unique label for this procedure, prepent a string/character to each procedure's name. For int, call the label <code>finit</code>.</p>
+        
+        <h3>Compiler Optimizations</h3>
+        
+        <p>Huge field of research. Typically, this is to reduce running time of the compiled code. For our purposes, we are interested in reducing the size of the compiled code without changing the behaviour of the program.</p>
+        
+        <p>Constant Folding: take an expression 1 + 2.</p>
+        
+        <p><code>lis $3<br>.word 1 ; code(1)<br>sw $3, -4(30)<br>sub $30, $30, $4<br>lis $3<br>.word 2 ; code(2)<br>sw $3, -4(30)<br>sub $30, $30, $4<br></code></p>
+        
+        <p>or you can just do <br><code>lis $3<br>.word 3</code></p>
+        
+        <p>Constant Propagation: Take an expression int x = 1, return x + x;</p>
+        
+        <p>Assume x is at offset -12.</p>
+        
+        <p><code>lis $3<br>.word 1<br>sw $3, -12(29)<br><br>lw $3, -12($29)<br>push $3<br>lw $3, -12($29)<br>pop $8<br>add $3, $8, $3</code></p>
+        
+        <p>If the compiler can detremine that a variable has a constant value at compile time, then we can replace the use of the variable with the constant value. If a variable is never used, don't define or initialize it.</p>
+        
+        <p>Common Subexpression Elimination: consider expression x + x</p>
+        
+        <p><code>lw $3, -12($29)<br>add $3, $3, $3</code></p>
+        
+        <p>Does not require that x's value be known.</p>
+        
+        <p>Dead Code Elimination: if there is code that is guaranteed to not run, don't generate it. Also, no need to generate code for procedures that are never called.</p>
+        
+        <p>Register Allocation: using the stack to store params and variables is inefficeint, both for time and the size of program. Resusters are quicker in time, and require no extra instructions. $14 to $28 are currentlyly unused, so which variables should get dedicated registers?</p>
+        
+        <ul>
+        <li>to minimize running time - variables in loops</li>
+        <li>to minimize size of output - variables used more frequently</li></ul>
+        
+        <p>Strength Reduction: running time optimization. Multiplication costs more than addition, so instead of multiplying by 2, add the value by itself.</p>
+        
+        <p>Peephole Optimization: works on your generated output. (Mips assembly). Instead of outputting to stdout, output to a data structure. This way you can analyze the generated assemple. Peephole: look at x # of instructions at a time.</p>
+        
+        <p>Suppose, you see a push, then some instructions, then a pop. If the code at x does not use $8, then push and pop are unnecessary.<br><code>add $8, $3, $0<br>x: some other instructions</code></p>
+        
+        <h3>Procedure-specifc Optimziations</h3>
+        
+        <p>Method Inlining: replace the call to a procedure with the body of the procedure. Only makes sense if the size of the method is less than the code needed to call the method.</p>
+        
+        <h3>Tail Call Optimizations</h3>
+        
+        <p>Done to reduce stack usage.</p>
+        
+        <p><i>Tail recursive functions</i> are when there is nothing left to do after the recursive call. ex:</p>
+        
+        <p><code>int fact(int n, int a) {<br>-if (n == 0) return 0;<br>-else<br>--return fact(n - 1, n * n)</code></p>
+        
+        <p>When the recursive call returns, the call stack content is not needed. We can reuse the call frame for the recursive call.</p>
+        
+        <p><code>code(procedure.....)<br>= id.lexeme: + sub $29, $30, $4 + code(Dcls) + code(stmts) + code(Expr) + "add $30, $29, $4" + "jr $31"</code></p>
+        
+        <p><code>code(factor &rarr; ID(expr1...exprn))<br>= code(expr1) + sw $3, param1.offset($29) + ..... + code(exprn) + sw $3, param2.offset($29) + add $30, $29, $4 + lis $5 + .word funcName _ jr $5 ;; note no update to $31, we're using jr not jalr</code></p>
+        
+        <h3>Supporting Function Overloading</h3>
+        
+        <p>Labels generated for overloaded functions as of now are not unique. <i>Name mangling</i> - no set strategy, some combination of a uniqur string, function name and types of parameters.</p>
+        
+        <p><code>F_f_i<br>F_f_ip</code></p>
+        
+        <p>As there is no set name mangling strategy, different compilers do different things. This makes it difficult to link code produced by different compilers.</p>
+        
+        <p>C does not support function overloading, so the compiler doesn't do name mangling. C++ does, though, so the compiler must mangle names.</p>
+        
+        <p>How can C++ code call a C function, the? Call the fn foo.</p>
+        
+        <P>In C++ code write: <Code>exter "C" int foo(int x);</Code></P>
+        
+        <P>What id we want to write C++ code that will then be used by C code? You cannot overload an extended function because C will then have to compile it and it does not support overloading.</P>
+        
+        <hr>
+        
+        <h3>Memory Management and the Heap</h3>
+        
+        <p>Stack allocated data is only alive for the scope of a variable. To avoid losing such data, we should either copy it to a different scope or use memory other than the stack. We call this memory the <i>heap</i>.</p>
+        
+        <p>The heap lives between the end of the stack and the beginning of the code. Objects allocation in the heap live on even after the stack-allocated variable pointing to the objecti goes out of scope. Who/when is the memory reclaimed?</p>
+        
+        <p>It is either done implicitly with automatic memory management/garbage collection (Racket/Java) or explicit memory management, where it must be done manually (C/C++/WLP4). The heap is implemented with the Freelist algorithm in this course.</p>
+        
+        <p>Freelist: maintain a linked list of all the free blocks of memory in the heap. The linked list resides in the free part of the heap. Assume the heap is 1 kB large. Then, the first word id first word is 1024, storing the size of the free block, and there exists a pointer to the next free block on the heap as well. This block is 1024 bytes large.</p>
+        
+        <p>Suppose 16 bytes are requrested. Then you must allocated 20 bytes (16 bytes, plus 4 for the space of an into to keep track of the size of the block). Then the first 4 bytes holds "16" and the other 16 is then allocated. The ptr returned refers to the 16 bytes.</p>
+        
+        <p>Suppose block A is freed. (free(p), delete P). P[-1] tells us how much memory was freed. The freed block is also placed at the head of the Freelist to keep free list in increasing address order.</p>
+        
+        <p>Since blocks in the free list are ordered by starting address, we can determine when two bocks can be merged into a bigger block.</p>
+        
+        <p>Limitations: can lead to <i>Fragmentation</i>.</p>
+        
+        <p>Say you allocate 20, then 40, and then free the 20. Now you have a block of 40 occupied in the middle of the linked list. Now say you allocate 5. Out of the first 20 free block, 5 will be  used and 15 free. This 15 is called a 'hole' because it is a free block in between two used blocks and will be skipped over if you request something larger than 15 bytes.</p>
+        
+        <p>Continuous deallocation will create holes, which can cause allocation requests to fail because the free memory is not allocated contiguously.</p>
+        
+        <p>To avoid/ reduce fragmentation, there are some heuristice. Say we want to allocate 10 bytes.</p>
+        
+        <ul>
+        <li>first fit: choose the first free block that canaccommodate the request</li>
+        <li>best fit: allocate from the smallest free block that can accommoate the request</li>
+        <li>worst fit: allocate from the block that leaves the biggest hole</li></ul>
+        
+        <h3>Automatic Memory Management</h3>
+        
+        <p><code>int f() {<br>-{<br>--MyObj Ol = new MyObj();<br>-}<br>} // Ol goes out of scope, space automatically reclaimed.</code></p>
+        
+        <p>Garbage collectors have to be smart and conservative.</p>
+        
+        <p><code>int f() {<br>-MyObj 02 = null;<br>-if(...) {<br>--MyObj 01 = new MyObj();<br>--02 = 01;<br>-} // 01 goes out of scope but the object is not yet garbage<br>} // 02 out of scope, garbage collect the object.</code></p>
+        
+        <p>We introduce a garbage collection algorithm: Mark and Sweep.</p>
+        
+        <p>The Mark phase: Discover reachable part of the heap. Identify prts on the stack pointing to heap memory. Follow ptrs, mark the objects (that are reachable). If reachable or discovered objects have pointers, follow those pointers and mark. Stop when no new pointers are discovered.</p>
+        
+        <p>The Sweep phase: All parts of the heap not marked are deemed free memory. Remove marks.</p>
+        
+        <p>Another algorithm: reference counting.</p>
+        
+        <p>Garbage collector maintains a reference count for each heap object. This requires tracking each pointer operation so that references can be updated. This means there's no need to stop the program for garbage collection, but it is extra book keeping and it can't detect cycles.</p>
+        
+        <p>Copying GC / Stop and Copy</p>
+        
+        <p>Split the heap into two. Allocate from "from". When you run out of memory in "From," copy reachable objects from "From" to "To". Swap "from" and "to". You can only use half of the memory and have to stop while copying, but this results in automatic defragmentation.</p>
+        
+        <p>Generational Garbage Collection</p>
+        
+        <p>The older the object, the less frequent the attempt to garbage collect it. Frequent GC (using any GC algorithm) for 'younger' generations of objects.</p>
+        
+        <hr>
+        
+        <h3>Loaders</h3>
+        
+        <p>A <i>loader</i> is a program that loads a program from a file into RAM and prepares it for execution.</p>
+        
+        <p><code>O.S. 1.0<br>repeat:<br>p &larr; choose program to run<br>loader(p) // assumes program is loaded at address 0<br>jr $0<br>beq $0, $0, repeat</code></p>
+        
+        <p><code>Loader 1.0<br>for (i = 0, i &lt; codelen; ++i)<br>-MEM[4i] = file[i];</code></p>
+        
+        <p>The assumption that all programs can be loaded at address 0 is rather native. What if we want to run multiple programs?</p>
+        
+        <p><code>0.S 2.0<br>repeat:<br>p &larr; choose program to run<br>$3 &larr; loader(p) // returns starting address of where program was loaded<br>jr $3<br>beq $0, $0, repeat</code></p>
+        
+        <p><code>Loader 2.0<br>Let N be the total memory needed by the program.<br>(codeLen + stack size + heap size) = N<br><br>&alpha; &larr; findFreeRam(N)<br>for (i = 0; i &lt; codeLen; ++i){<br>-MEM[&alpha;+4i] = file[i]<br>}<br>$30 &larr; &alpha; + N</code></p>
+        
+        <p>Places where labels are used: in branches and in .word. Our assembler replaced .word (label) with the address of the label from the symbol table. But we started counting at address 0 even though we are loading the program at &alpha;.</p>
+        
+        <p>Solution: Add &alpha; to each line that represents a .word (label). In essence, we are <i>relocating .words</i>.</p>
+        
+        <p>But since machine code is just a sequence of bits, the loader has no way of knowing which line used to be a .word (label). This means that the assembler must tell the loader what lines need relocation. Assemblers don't just output machine code, they also output object code.</p>
+        
+        <hr>
+        
+        <p><i>MERL</i> stands for MIPS Executable Relocatable and Linkable format. It consists of three sections:</p>
+        
+        <ol>
+        <li>Merl header</li>
+        <li>Code section (assembled code like before)</li>
+        <li>MERL footer/table, containing relocation entries (for now). Each entry has: format code ------- value 1, and the address of the line that needs relocation.</li></ol>
+        
+        <p>The MERL cookie (beq $1, $0, 0) makes the MERL object file executable without relocation.</p>
+        
+        <hr>
+        
+        <h3>Tools</h3>
+        
+        <p>binasm does not produce MERL.</p>
+        
+        <p><code>cs241.relasm (relocation assembler) &lt; in.mips &gt; out.merl (relocatable)</code></p>
+        
+        <p><Code>cs241.merl 0x12345678 (relocation address &alpha;) &lt; out.merl &gt; out.mips (relocated mips file)</Code></p>
+        
+        <p>mips.twoints and mips.array can be given a non-zero starting address (if it is not given it is assumned to be 0x0).</p>
+        
+        <P><code>mips.twoints out.mips 0x12345678</code></P>
+        
+        <hr>
+        
+        <p>Loader (with built-in relocation)</p>
+        
+        <p>input: merl file</p>
+        
+        <p><Code>read(); // ignore merl cookie<br>endMod &larr; read();<br>codeLen &larr; read() - 12<br>&alpha; &larr; findFreeRAM(codeLen + heap + stack)<br>for (i = 0; i &lt; codeLen; i += 4) {<br>~MEM[&alpha; + i] = read()<br> ~//only loading the code, not the header or footer, since it's not needed to run<br>~i &larr; codeLen + 12<br>~while (i &lt; endMod) {<br>~~format &larr; read()<br>~~if (format != 1)<br>~~~ERROR<br>~~else<br>~~~rel &larr; read() // address that needs relocation<br>~~~MEM[&alpha; + rel - 12] += &alpha; - 12<br>~~i += 8<br>~endwhile</Code></p>
+        
+        <p>Your program is only relocatable when it uses labels to refer to a specific address.</p>
+        
+        <p><code>lis $2<br>.word 12<br>jr $2<br>jr $31 (jumps to this address... which ends the program)</code></p>
+        
+        <p>If you relocate this program, this program won't work because you've hard coded address 12 into your program, but this would be offset by &alpha; when relocated. Thus address 12 will no longer hold the jr call. To make this relocatable:</p>
+        
+        <p><code>lis $2<br>.word A<br>jr $2<br>A:<br>jr $31</code></p>
+        
+        <h3>Linkers</h3>
+        
+        <p>Use available libraries (eg. alloc.merl, print.merl). We would like to break bigger programs into multiple asm files.</p>
+        
+        <p>One approach is the following:<br><code>cat one.asm two.asm three.asm | cs241.binasm</code></p>
+        
+        <p>This works, but a change requires reassembling the entire project. We don't want this. We would like to be able to separately assemble each file and then merge them, but since all these files cannot all be loaded at address 0, we relocate output.</p>
+        
+        <P><code>one.asm &rarr; relasm &rarr; one.merl<br>two.asm &rarr; relasm &rarr; two.merl<br>three.asm &rarr; relasm &rarr; three.merl</code></P>
+        
+        <P>Using <code>cat</code> on these files does not produce valid MERL. We need a smarter tool.</P>
+        
+        <p>Enter the <i>linker</i>, which cleverly merges multiple merl files.</p>
+        
+        <p>Issue: what if a file uses a label it expected to be defined externally? We can tell the assembler that we are using a label defined externally through an <i>import directive</i>. (A <i>directive</i> is something that talks directly to the assembler, it's not part of the MIPS assembly instruction set).</p>
+        
+        <p>If we want to expose a label for others to use, we can use the <i>export directive</i>.</p>
+        
+        <p>The assembler will a <code>.word &lt;imported label&gt;</code> into what we call an External Symbol Reference (ESR) entry in the MERL table.</p>
+        
+        <p>ESR ENTRY:</p>
+        
+        <p><code>.word 0x11 ;; format specifier for ESR<br>.word address ;; address of where the imported label is used<br>.word (length of label)<br>.word (ascii for character 1)<br>.word (ascii for character 2).......</code></p>
+        
+        <p>This is for importing. What about exporting. For each exported label, the assembler creates an External Symbol Definition (ESD)</p>
+        
+        <p>ESD ENTRY:</p>
+        
+        <p><code>.word 0x05 ;; format specifier for ESD<br>.word (where labels are defined)<br>.word (length of label)<br>.word (ascii for character 1)..............</code></p>
+        
+        <p>If an EST is resolved, a relocation entry should eist in the merl table. All ESDs and unresolved ESRs remain.</p>
+        
+        <h3>FIN</h3>
+        
+        <hr>
+        
+        <h3>Final Review</h3>
+        
+        <h4>Midterm Questions</h4>
+        
+        <p>0x03db382b - translate into a MIPS instruction</p>
+        
+        <p>In binary: 0000 0011 1101 1011 0011 1000 0010 1011<br>000000 11110 (s, 30) 11011 (t, 27) 00111 (d, 7) 00000 101011 (sltu)<br>sltu $7, $30, $27</p>
+        
+        <hr>
+        
+        <p>courseNumber: .word 241</p>
+        
+        <p>lis $4<br>.word courseNumber ;; loads address of courseNumber into register 4<br>lw $4, 0($4)</p>
+        
+        <hr>
+        
+        <p>BCD question.</p>
+        
+        <p><code>unsigned int BCDtoInt(unsigned char c) {<br>~return 10 * (c &gt;&gt; 4) + c &amp; 0xf;<br>}</code></p>
+        
+        <p><code>unsigned char InttoBCD(unsigned int n){<br>~return ((n / 10) &lt;&lt; 4) | (n % 10);<br>}</code></p>
+        
+        <hr>
+        
+        <p>NFA to DFA question.</p>
+        
+        <table style='width:100%'><tr><th>State</th><th>a</th><th>b</th></tr><tr><td>1</td><td>{5,3}</td><td>{2}</td></tr><tr><td>{5,3}</td><td>&empty;</td><td>{4}</td></tr><tr><td>{2}</td><td>{2}</td><td>{2,3}</td></tr><tr><td>{4}</td><td>{5}</td><td>&empty;</td></tr><tr><td>{2,3}</td><td>{2}</td><td>{2,3,4}</td></tr><tr><td>{5}</td><td>&empty;</td><td>&empty;</td></tr><tr><td>{2,3,4}</td><td>{2,5}</td><td>{2,3,4}</td></tr><tr><td>{2,5}</td><td>{2}</td><td>{2,3}</td></tr></table>
+        
+        <p>Construct the table from here and calculate accepting states as needed.</p>
+        
+        <hr>
+        
+        <p>L s.t. &Sigma; = {a,b} and w &isin; L if |w| % 2 = 0 or |w|<sub>b</sub> % 3 = 0</p>
+        
+        <p>I got this one right, anyway</p>
+        
+        <hr>
+        
+        <p>Predict table.</p>
+        
+        <p>Recall: Nullable(&gamma;) = T iff &gamma; &rarr;<sup>*</sup> &epsilon;<br>First(&gamma;) = { b &isin; &Sigma;: &gamma; &rarr;<sup>*</sup> b&Beta; for some &Beta; }<br>Follow(A) = { c &isin; &Sigma;: S' &rarr;<sup>*</sup> &alpha;Ac&Beta; for some &alpha; and &Beta; }<br><br>Predict(A, a) = { (A &rarr; &gamma;) &isin; P: a &isin; First(&gamma;) or (Nullable(&gamma;) and a &isin; Follow(A) }</p>
+        
+        <p>1. S &rarr; | A |<br>2. A &rarr; aBc<br>3. A &rarr; B<br>4. B &rarr; b<br>5. B &rarr; &epsilon;</p>
+        
+        <table style='width:100%'><tr><th>.</th><th>|-</th><th>-|</th><th>a</th><th>b</th><th>c</th></tr><tr><th>S</th><td>1</td><td>x</td><td>x</td><Td>x</Td><td>x</td></tr><tr><th>A</th><td>x</td><td>3</td><td>2</td><td>3</td><td>x</td></tr><tr><th>B</th><td>x</td><Td>5</Td><td>x</td><td>4</td><td>5</td></tr></table>
+        
+        <hr>
+        
+        <p>S &rarr; | P |<br>P &rarr; ( L )<br>P &rarr; x<br>L &rarr; P<br>L &rarr; P, L</p>
+        
+        <hr>
+        
+        <p>Does a linker act as an assembler?</p>
+        
+        <p>No. A linker does not synthesize code unlike an assembler.</p>
+        
+        <hr>
+        
+        <p>Final will be 40 % pre midterm and 60 % post midterm material. Heavy emphasis on code generation.</p>
+        
+        <p>Final will probably be easier than the midterm.</p>
+        
+    </body>    
+</html>

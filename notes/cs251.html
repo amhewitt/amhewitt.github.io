@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html>
+    
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <title>CS 251 S18: FINAL REVIEW NOTES</title>
+        <meta name="description" content="R. Kharal's section.">
+        <link rel="stylesheet" href="../main.css">
+    </head>
+    <body>
+        
+        <header><p><a href="notesl.html">&larr; Back to notes page</a></p></header>
+        
+       <h2>REVIEW SESSION: SPRING 2018</h2>
+        
+        <hr>
+        
+        <h3>Exam Writing Skills/Exam Information</h3>
+        
+        <p>Things might not be amazing on your exam, just be calm and confident, that's the best thing you can do for yourself. Panic inhibits focus.</p>
+        
+        <p>Don't get stuck too long on a question. Make time for everything.</p>
+        
+        <p>The stuff in the review session is not new.</p>
+        
+        <p>Emphasis on post-midterm material.</p>
+        
+        <ul><li>Single cycle datapath</li>
+        <li>Multicycle datapath</li>
+        <li>Pipelining</li>
+        <li>Memory hierarchies: caches</li>
+        <li>Memory hierarchies: virtual memory</li></ul>
+        
+        <h3>Single Cycle Datapath</h3>
+        
+        <p>Instruction bits move forward in the datapath</p>
+        
+        <p>The instruction depicted is SW, because of the highlighted path. It uses the write data which is indicative of the SW instruction.</p>
+        
+        <p>Total execution time for R format: Instr + RegRead + Mux + RegWrite + Data + Mux = 710. You don't need to add the first +5 because it happens in the background as I'm moving forward. Control bit runs at the same time as Registers, since the former is dependent on the latter - Registers is the bottleneck.</p>
+        
+        <p>Total execution time for Jump: Instr + Mux + Shift Left = 315. 300 is obvious. The two +10's occur in parallel. We need the CU to generate the jump bit, then only care about the latter mux (don't need the first one to do anything, basically garbage as far as jump is concerned).</p>
+        
+        <p>Recall that clock cycle time is the time of the slowest instruction (usually, this is loadword)</p>
+        
+        <h4>Modifying the Datapath</h4>
+        
+        <p>Efficiency is important, don't need to be super nitpicky, though. Always reuse as much of the datapath as possible, if it's not inefficient to do so. Things like adding a new shift left unit or sign extend unit is minimal cost and efficient.</p>
+        
+        <p>CPI of single cycle datapath (CPI = clock cycles per instruction): 1. Catch is that the clock cycle duration is a lot longer than in pipelining. Comparative analysis is going to be important on te final.</p>
+        
+        <h3>Multicycle Datapath</h3>
+        
+        <p>Relatively small part of final - but still be able to understand the material.</p>
+        
+        <p>Break up original long CC into a shorter CC. We assume one clock cycle can contain one memory access, a register file access (2 reads/1 write), or one ALU operation.</p>
+        
+        <P>This is a 5 stage datapath, not a 5 stage pipeline. The control unit at the bottom is unique to multicycle. Does one of 5 steps at a time, controller forces every instruction into 5 steps. CC time was 200, not any shorter than that because of memory access time (bottleneck) was the slowest step. IF and DMA were the slowest. Don't have the notation of a dynamic/changing clock cycle, does computations based on the slowest time.</P>
+        
+        <p>Common to both: registers are still updated at the end of the clock cycle (writeback). Not everything is going to be updated in multicycle (step 5).</p>
+        
+        <p>Automatically puts every instruction at 1000 ps, in this model it's less efficient than single cycle. A more realistic datapath design would have efficiencies.</p>
+        
+        <h3>Pipelining</h3>
+        
+        <p>Goal of the pipeline is that every stage will contain a different instruction. One new instruction begins every clock cycle. Ideally, one compeleted instruction per CC</p>
+        
+        <p>Structural (register: used by ID and writeback stage, allow the write to happen before read, both to access), data (data computation needed for a subsequent instruction eg. lw add; add sub), control hazards (flow of control change: PC updated in beq/bne/jump, when do we start next instruction).</p>
+        
+        <p>Forwarding unit - what stage in the pipeline do we forward to: EX. Branch in MEM stage (forward unit will take care of any BDH), Branch in ID (BDH can exist, one stall needed NOP?)</p>
+        
+        <p>Load word stall = 1 CC, no branch data hazard because branch is in MEM stage.</p>
+        
+        <p>Branch in ID: 108-112 has load use hazard, 120-124 branch data hazard, 124-128 branch control hazard. Code rearranged possible in order to avoid all the hazards.</p>
+        
+        <h3>Virtual Memory</h3>
+        
+        <p>PC has a virtual address.</p>
+        
+        <p>Step 1: Lookup in TLB - if miss, you need to check the page table. Now you have the physical address, the first place to check after that is the cache.</p>
+        
+        <p>If hit, copy the address translation into the TLB. If cache miss, </p>
+        
+        <P>Note that wherecer misses occur, updates need to be made in order to avoid future misses.</P>
+        
+        <p>Parent of TLB: page table, parent of cache: page in RAM. Parent of RAM: Disk. Careful that RAM could also mean the page table.</p>
+        
+        <p>Page faults occur when TLB and page table are both misses. If page table is a miss, cache must also be a miss. If something doesn't have a physical address, it shouldn't be in the cache. If page table is a miss, no physical address, so RAM is a miss. So it does have dependencies on other parts of your hierarchy.</p>
+        
+        <h4>Cache Analysis</h4>
+        
+        <p>Now look at it in terms of the memory hierarchy. Cache miss/hit/fetch from RAM.</p>
+        
+        <P>Instriction cache misses: once items brought into the cache, they stay - block size 2 - ram access: 102 cc. How many extra clock cycles are added because info is not preloaded in instruction memory?</P>
+        
+        <p>In example, 10 instructions. If block size =1, there are instruction 10 cache misses (every single address not already in cache, first time you ask for it it's a miss). When you go back and do that loop they are already there, you don't have to worry about fetching them - see assumptions above.</p>
+        
+        <p>If block size is 2, you can say simply 5 misses if 100 was the first word in its block. When you have a miss at 100, you aren't just going to get 100 and 104 necesasrily. What position is 100 in? Does it belong with 96 or 104? Figure this out because 100 is not divisible by (4 * 2) = 8. (Recall that block size 2 means that once a miss is found, you fetch two words from RAM. Who is it?) Given that the block size is 2, the address of the instruction that causes the third cache miss is 112. (96 100 - 104 108 - 112 116)</p>
+        
+    </body>    
+</html>
